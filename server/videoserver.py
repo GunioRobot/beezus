@@ -70,7 +70,7 @@ class categoryimage:
 
 def main():
     config = ConfigParser.RawConfigParser()
-    config.read('/tmp/roxsbox.config')
+    config.read('/tmp/mc.config')
 
     cachefile = config.get('global','dbcache')
     shelf = shelve.open(cachefile)
