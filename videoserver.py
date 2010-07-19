@@ -4,14 +4,23 @@ import shelve
 from os import curdir,sep,path
 from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
 import ConfigParser
-# import web
+import web
 
 from imdb import IMDb
 
 import videodb
 
+urls = ('/videos.xml', 'videos')
+
+class videos:
+    def GET(self):
+        # return "Hello, World"
+        return web.ctx.videodb.encode('latin-1')
 
 class VideoHandler(BaseHTTPRequestHandler):
+
+    def GET(self):
+        return self.server.index.encode('latin-1')
 
     def do_GET(self):
         if self.path == '/video.xml':
@@ -51,15 +60,27 @@ def main():
         shelf['tv_index'] = index
         shelf.sync()
 
-    try:
-        server = HTTPServer(('localhost',8888), VideoHandler)
-        server.index = index
-        print 'started httpserver...'
-        server.serve_forever()
-    except:
-        print '^C received, shutting down server'
-        server.socket.close()
+
+    app = web.application(urls, globals())
+    # Apparently this is necessary to pass data to the handler:
+    def _wrapper(handler):
+        web.ctx.videodb = index
+        return handler()
+
+    app.add_processor(_wrapper)
+    app.run()
+
+    # try:
+    #     server = HTTPServer(('localhost',8888), VideoHandler)
+    #     server.index = index
+    #     print 'started httpserver...'
+    #     server.serve_forever()
+    # except:
+    #     print '^C received, shutting down server'
+    #     server.socket.close()
 
 if __name__ == '__main__':
     main()
+
+
 
