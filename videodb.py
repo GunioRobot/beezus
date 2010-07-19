@@ -44,6 +44,7 @@ def find_show(service,shows,title):
         showid = service.search_movie(title)
         for match in service.search_movie(title):
             if match['kind'] == 'tv series':
+                service.update(match)
                 service.update(match,'episodes')
                 shows[title] = match
                 return match

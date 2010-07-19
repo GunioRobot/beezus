@@ -10,33 +10,33 @@ from imdb import IMDb
 
 import videodb
 
-urls = ('/videos.xml', 'videos')
+urls = ('/videos.xml', 'videos',
+        '/images/TV/(.*)/.*/poster\.jpg', 'categoryimage',
+        '/images/(.*)', 'images')
 
 class videos:
     def GET(self):
         # return "Hello, World"
-        return web.ctx.videodb.encode('latin-1')
+        return web.ctx.videoindex.encode('latin-1')
 
-class VideoHandler(BaseHTTPRequestHandler):
+class images:
+    def GET(self,name):
+        return "got an image request: %s" % name
 
-    def GET(self):
-        return self.server.index.encode('latin-1')
-
-    def do_GET(self):
-        if self.path == '/video.xml':
-            self.send_response(200)
-            self.send_header('Content-type', 'text/xml')
-            self.end_headers()
-            self.wfile.write(self.server.index.encode('latin-1'))
-            return
+class categoryimage:
+    def GET(self,series):
+        db = web.ctx.videodb
+        if db.has_key(series):
+            i = IMDb()
+            i.update(db[series])
+            image_url = db[series]['full-size cover url']
+            return image_url
         else:
-            self.send_response(404)
-            print "Could not serve %s" % self.path
+            return "Didn't find image for %s season %s" % (series,season)
 
 def main():
     config = ConfigParser.RawConfigParser()
     config.read('/tmp/roxsbox.config')
-
 
     cachefile = config.get('global','dbcache')
     shelf = shelve.open(cachefile)
@@ -64,20 +64,12 @@ def main():
     app = web.application(urls, globals())
     # Apparently this is necessary to pass data to the handler:
     def _wrapper(handler):
-        web.ctx.videodb = index
+        web.ctx.videodb = db
+        web.ctx.videoindex = index
         return handler()
 
     app.add_processor(_wrapper)
     app.run()
-
-    # try:
-    #     server = HTTPServer(('localhost',8888), VideoHandler)
-    #     server.index = index
-    #     print 'started httpserver...'
-    #     server.serve_forever()
-    # except:
-    #     print '^C received, shutting down server'
-    #     server.socket.close()
 
 if __name__ == '__main__':
     main()
