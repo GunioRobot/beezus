@@ -2,35 +2,69 @@ import string,cgi,time
 import sys
 import shelve
 from os import curdir,sep,path
+import urllib
 from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
 import ConfigParser
 import web
+import mimetypes
 
 from imdb import IMDb
 
 import videodb
 
-urls = ('/videos.xml', 'videos',
-        '/images/TV/(.*)/.*/poster\.jpg', 'categoryimage',
-        '/images/(.*)', 'images')
+urls = ('/Videos/videos.xml', 'videos',
+        '/Videos/http://(.*)', 'images',
+        '/Videos/images/TV/(.*)/.*/poster\.jpg', 'categoryimage',
+        '/Videos/images/(.*)', 'images')
+
 
 class videos:
     def GET(self):
         # return "Hello, World"
-        return web.ctx.videoindex.encode('latin-1')
+        return web.ctx.videoindex.encode('ascii','ignore')
 
 class images:
-    def GET(self,name):
-        return "got an image request: %s" % name
+    def GET(self,image_url):
+        url = 'http://' +image_url
+        (b,f) = path.split('http://' + url)
+        # web.notfound()
+        #print "looking for %s" % image_url
+
+        #try:
+        cachedfile = path.join(web.ctx.imagecache, f)
+        urllib.urlretrieve(url,cachedfile)
+        mime_type = mimetypes.guess_type(cachedfile)[0] or 'application/octet-stream'
+        web.header("Content-Type", mime_type)
+        static_file = open(cachedfile, 'rb')
+        #web.ctx.output = static_file
+        return static_file
+        # except:
+        #     web.notfound()
+
+
 
 class categoryimage:
     def GET(self,series):
+        web.notfound()
         db = web.ctx.videodb
         if db.has_key(series):
             i = IMDb()
             i.update(db[series])
             image_url = db[series]['full-size cover url']
-            return image_url
+
+
+            (b,f) = path.split(image_url)
+
+            #try:
+            cachedfile = path.join(web.ctx.imagecache, f)
+            urllib.urlretrieve(image_url,cachedfile)
+            mime_type = mimetypes.guess_type(cachedfile)[0] or 'application/octet-stream'
+            web.header("Content-Type", mime_type)
+            static_file = open(cachedfile, 'rb')
+            web.ctx.output = static_file
+            # except:
+            #     web.notfound()
+
         else:
             return "Didn't find image for %s season %s" % (series,season)
 
@@ -66,6 +100,7 @@ def main():
     def _wrapper(handler):
         web.ctx.videodb = db
         web.ctx.videoindex = index
+        web.ctx.imagecache = '/tmp/'
         return handler()
 
     app.add_processor(_wrapper)
