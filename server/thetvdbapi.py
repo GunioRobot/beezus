@@ -276,7 +276,10 @@ class Episode(object):
 
         # Artwork/screenshot
         self.image = node.findtext("filename")
-
+        if self.image is not None:
+            self.poster_url = "%s/banners/%s" % (mirror_url, self.image)
+        else:
+            self.poster_url = ""
         # Episode ordering information (normally for specials)
         self.airs_after_season = node.findtext("airsafter_season")
         self.airs_before_season = node.findtext("airsbefore_season")
@@ -311,7 +314,7 @@ class Episode(object):
             str += tag('Rating', float(self.rating) * 10)
         str += tag('EpisodeNumber', self.absolute_number)
         str += tag('Episode', self.episode_number)
-
+        str += tag('HDPosterURL', self.poster_url)
         return tag('episode',str)
 
 
