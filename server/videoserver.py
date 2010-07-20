@@ -12,23 +12,46 @@ from imdb import IMDb
 
 import videodb
 
-urls = ('/Videos/videos.xml', 'videos',
+urls = ('/Videos/tv.xml', 'shows',
+        '/Videos/(.*)', 'seasons',
         '/Videos/http://(.*)', 'images',
         '/Videos/images/TV/(.*)/.*/poster\.jpg', 'categoryimage',
         '/Videos/images/(.*)', 'images')
 
 
-class videos:
+class shows:
     def GET(self):
         # return "Hello, World"
+        str = "<tv>\n"
+        for s in web.ctx.videodb.values():
+            str += s.render_xml()
+        str += "</tv>"
+        return str
+
         return web.ctx.videoindex.encode('ascii','ignore')
+
+class seasons:
+    def GET(self,show):
+        print 'looking for %s' % show
+
+        s = find_show(web.ctx.videodb,show)
+
+        if s is None:
+            raise web.notfound()
+
+        print 'found %s' % s
+        str = u'<series>\n'
+        for season in s.episode_list.values():
+            str += season.render_xml()
+            str += u'</series>\n'
+
+        return str
+
 
 class images:
     def GET(self,image_url):
         url = 'http://' +image_url
         (b,f) = path.split('http://' + url)
-        # web.notfound()
-        #print "looking for %s" % image_url
 
         #try:
         cachedfile = path.join(web.ctx.imagecache, f)
@@ -85,21 +108,22 @@ def main():
         shelf.sync()
 
     service = IMDb()
-    if shelf.has_key('tv_index'):
-        index = shelf['tv_index']
-        # print index.encode('latin-1')
-    else:
-        index = videodb.print_results(service,db)
-        # print index.encode('latin-1')
-        shelf['tv_index'] = index
-        shelf.sync()
+    # if shelf.has_key('tv_index'):
+    #index = shelf['tv_index']
+    # print index.encode('latin-1')
+    #else:
+    # index = videodb.gen_tv_xml(db)
+    # shelf['tv_index'] = index
+    # shelf.sync()
 
+
+    # print videodb.gen_tv_xml(db).encode('latin-1')
 
     app = web.application(urls, globals())
     # Apparently this is necessary to pass data to the handler:
     def _wrapper(handler):
         web.ctx.videodb = db
-        web.ctx.videoindex = index
+        # web.ctx.videoindex = index
         web.ctx.imagecache = '/tmp/'
         return handler()
 
@@ -110,4 +134,8 @@ if __name__ == '__main__':
     main()
 
 
-
+# FIXME: This is dumb, and inefficient. Should use a better way to index it
+def find_show(db,show):
+    for s in db.values():
+        if s.name == show:
+            return s
