@@ -9,6 +9,10 @@ Sub Main()
     'initialize theme attributes like titles, logos and overhang color
     initTheme()
 
+		tv = loadTV()
+		printAA(tv)
+		tv.display()
+
     'prepare the screen for display and get ready to begin
     screen=preShowHomeScreen("", "")
     if screen=invalid then
@@ -24,7 +28,7 @@ End Sub
 
 '*************************************************************
 '** Set the configurable theme attributes for the application
-'** 
+'**
 '** Configure the custom overhang and Logo attributes
 '** Theme attributes affect the branding of the application
 '** and are artwork, colors and offsets specific to the app
