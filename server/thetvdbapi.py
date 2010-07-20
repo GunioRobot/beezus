@@ -240,6 +240,8 @@ class Show(object):
     def render_xml(self):
         str = u''
         str += tag('ContentType',u'series')
+        str += tag('Description', self.overview)
+        str += tag('ShortDescriptionLine1',self.name)
         str += tag('Title', self.name)
         str += tag('HDPosterURL', self.poster_url)
         str += tag('Rating', float(self.rating) * 10)
@@ -298,7 +300,20 @@ class Episode(object):
         return repr(self)
 
     def render_xml(self):
-        pass
+        str = u''
+        str += tag('ContentType',u'episode')
+        str += tag('Title', self.name)
+        str += tag('ShortDescriptionLine1', self.name)
+        str += tag('ShortDescriptionLine2', u'Season %s Episode %s' % (self.season_number, self.episode_number ))
+        str += tag('Description', self.overview)
+        str += tag('Season', self.season_number)
+        if self.rating:
+            str += tag('Rating', float(self.rating) * 10)
+        str += tag('EpisodeNumber', self.absolute_number)
+        str += tag('Episode', self.episode_number)
+
+        return tag('episode',str)
+
 
 
 
@@ -323,6 +338,9 @@ class Season:
         str += tag('SeasonTitle',self.series.name + u' Season %s' % self.season)
         str += tag('HDPosterURL', self.series.poster_url)
         str += tag('Rating', float(self.series.rating) * 10)
+        str += tag('ShortDescriptionLine1', self.series.name)
+        str += tag('ShortDescriptionLine2', u'Season %s' % self.season)
+        str += tag('Season', self.season)
         return tag('season',str)
 
 

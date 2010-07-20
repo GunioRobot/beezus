@@ -13,7 +13,9 @@ from imdb import IMDb
 import videodb
 
 urls = ('/Videos/tv.xml', 'shows',
-        '/Videos/(.*)', 'seasons',
+        '/Videos/(.*)/(.*)/(.*)', 'get_episode',
+        '/Videos/(.*)/(.*)$', 'episodes',
+        '/Videos/(.*)$', 'seasons',
         '/Videos/http://(.*)', 'images',
         '/Videos/images/TV/(.*)/.*/poster\.jpg', 'categoryimage',
         '/Videos/images/(.*)', 'images')
@@ -28,7 +30,6 @@ class shows:
         str += "</tv>"
         return str
 
-        return web.ctx.videoindex.encode('ascii','ignore')
 
 class seasons:
     def GET(self,show):
@@ -43,9 +44,42 @@ class seasons:
         str = u'<series>\n'
         for season in s.episode_list.values():
             str += season.render_xml()
-            str += u'</series>\n'
 
+        str += u'</series>\n'
         return str
+
+class episodes:
+    def GET(self,show,season):
+        s = find_show(web.ctx.videodb,show)
+
+        if s is None:
+            raise web.notfound()
+
+        str = u'<season>'
+        for e in s.episode_list[season].episodes.values():
+            print e
+            str += e.render_xml()
+
+        str += u'</season>'
+        return str
+
+class get_episode:
+    def GET(self,show,season,epi):
+        print "trying to get a episode"
+        s = find_show(web.ctx.videodb,show)
+
+        if s is None:
+            raise web.notfound()
+
+        print s.episode_list[season]
+
+        ep = s.get_episode(season,epi)
+        str = u'<episode>'
+        str += ep.render_xml()
+        str += u'</episode>'
+        return str
+
+
 
 
 class images:
