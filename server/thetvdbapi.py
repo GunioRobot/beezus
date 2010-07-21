@@ -22,7 +22,6 @@ import re
 
 import xml.etree.cElementTree as ET
 
-API_KEY='53D4FDB27CEB0F0B'
 
 class TheTVDB(object):
     def __init__(self, api_key):

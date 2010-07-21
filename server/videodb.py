@@ -7,8 +7,8 @@ import thetvdbapi
 # SHOW_MATCH_REGEX="b(?P<title>.*)S(?P<season>\d+)E(?P<episode>\d+).*\.(?P<ext>\w+)$"
 
 
-def gen_db(tv_directory,tv_regex):
-    service = thetvdbapi.TheTVDB(thetvdbapi.API_KEY)
+def gen_db(tv_directory,tv_regex,api_key):
+    service = thetvdbapi.TheTVDB(api_key)
     regex = re.compile(tv_regex)
     # shows is a cache of previously found shows.
     shows = { }

@@ -127,7 +127,7 @@ class categoryimage:
 
 def main():
     config = ConfigParser.RawConfigParser()
-    config.read('/tmp/mc.config')
+    config.read('/etc/mc.config')
 
     cachefile = config.get('global','dbcache')
     shelf = shelve.open(cachefile)
@@ -137,7 +137,8 @@ def main():
     else:
         path = config.get('tv','path')
         regex = config.get('tv','regex')
-        db = videodb.gen_db(path,regex)
+        apikey = config.get('global','apikey')
+        db = videodb.gen_db(path,regex,apikey)
         shelf['tv'] = db
         shelf.sync()
 
