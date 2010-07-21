@@ -9,7 +9,7 @@ Function genericPreShowScreen() As Object
 	if m.posterStyle <> invalid then
 		screen.SetListStyle(m.posterStyle)
 	else
-		screen.SetListStyle("flat-category")
+		screen.SetListStyle("arched-portrait")
   end if
 	return screen
 End Function

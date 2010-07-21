@@ -9,19 +9,15 @@ Sub Main()
     'initialize theme attributes like titles, logos and overhang color
     initTheme()
 
-		tv = loadTV()
-		printAA(tv)
-		tv.display()
+    'display a fake screen while the real one initializes. this screen
+    'has to live for the duration of the whole app to prevent flashing
+    'back to the roku home screen.
+    screenFacade = CreateObject("roPosterScreen")
+    screenFacade.show()
 
-    'prepare the screen for display and get ready to begin
-    screen=preShowHomeScreen("", "")
-    if screen=invalid then
-        print "unexpected error in preShowHomeScreen"
-        return
-    end if
+		top = makeTopLevel()
 
-    'set to go, time to get started
-    showHomeScreen(screen)
+		top.display()
 
 End Sub
 
