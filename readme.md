@@ -26,24 +26,24 @@ In addition to the Roku SDK, you'll need a few python support packages:
 Installation
 ------------
 
-1. Copy the (server/mc.config) file to (/etc/mc.config). Edit it to include your
+1. Copy the `server/mc.config` file to `/etc/mc.config`. Edit it to include your
 	 API key, the path where you want the database to be stored, and the path to
 	 a directory where your video files are stored.
 
 	 The database is loaded by using the filename to lookup episode
 	 information. It assumes that files are named in the format
-	 (<show>.S<season>E<episode>). If this is not how yours are named, you can
-	 modify the (regex) configuration key to suit.
+	 `<show>.S<season>E<episode>`. If this is not how yours are named, you can
+	 modify the `regex` configuration key to suit.
 
-2. The client is installed by navigating to the (client) directory and executing
-	 (make install). This assumes that you have the Roku SDK environment set up
-	 correctly, including the (ROKU_DEV_TARGET) environment variable.
+2. The client is installed by navigating to the `client` directory and executing
+	 `make install`. This assumes that you have the Roku SDK environment set up
+	 correctly, including the `ROKU_DEV_TARGET` environment variable.
 
 Running
 -------
 
-The server is started by navigating to the (server) directory and typing (python
-videoserver.py). The first time you do this it will populate the database, which
+The server is started by navigating to the `server` directory and executing `python
+videoserver.py`. The first time you do this it will populate the database, which
 will take some time. It may be useful, for testing, to only scan a portion of
 the video file hierarchy.
 
