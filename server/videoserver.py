@@ -58,8 +58,11 @@ class episodes:
             raise web.notfound()
 
         str = u'<season>'
-        for e in s.episode_list[season].episodes.values():
-            str += e.render_xml(web.ctx.app_root)
+        episode_nums = s.episode_list[season].episodes.keys()
+        episode_nums.sort(key=int)
+
+        for e in episode_nums:
+            str += s.episode_list[season].episodes[e].render_xml(web.ctx.app_root)
         str += u'</season>'
         return str
 

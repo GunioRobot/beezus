@@ -93,20 +93,21 @@ Function showDetail(screen As Object) As Integer
                         if showIndex <> -1
                            refreshShowDetail(screen, showList, showIndex)
                         end if
-                endif
+												                endif
             else if msg.isButtonPressed()
                 print "ButtonPressed"
                 print "ButtonPressed"
                 if msg.GetIndex() = 1
-                    PlayStart = RegRead(showList[showIndex].ContentId)
-                    if PlayStart <> invalid then
-                        showList[showIndex].PlayStart = PlayStart.ToInt()
-                    endif
-                    showVideoScreen(showList[showIndex])
+                    ' PlayStart = RegRead(showList[showIndex].ContentId)
+										PlayStart = 0
+                    ' if PlayStart <> invalid then
+                    '    showList[showIndex].PlayStart = PlayStart.ToInt()
+                    'endif
+                    showVideoScreen(m)
                 endif
                 if msg.GetIndex() = 2
-                    showList[showIndex].PlayStart = 0
-                    showVideoScreen(showList[showIndex])
+                    ' showList[showIndex].PlayStart = 0
+                    showVideoScreen(m)
                 endif
                 if msg.GetIndex() = 3
                 endif
