@@ -302,7 +302,7 @@ class Episode(object):
     def __str__(self):
         return repr(self)
 
-    def render_xml(self):
+    def render_xml(self,server_url=None):
         str = u''
         str += tag('ContentType',u'episode')
         str += tag('Title', self.name)
@@ -316,6 +316,19 @@ class Episode(object):
         str += tag('Episode', self.episode_number)
         str += tag('HDPosterURL', self.poster_url)
         str += tag('Series', self.series.name)
+        # FIXME: Generate the stream properly
+        try:
+            url = '%s/%s/%s/%s/play' % (server_url,self.series.name,self.season_number, self.episode_number)
+
+            stream = tag('url', url)
+            stream += tag('bitrate', 200)
+            stream += tag('quality', 'false')
+            stream += tag('contentid', self.id)
+            stream += tag('stickyredirects', 'false')
+            str += tag('stream',stream)
+        except Exception as e:
+            print e
+
         return tag('episode',str)
 
 

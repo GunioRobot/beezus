@@ -4,9 +4,6 @@ import os
 import string
 import thetvdbapi
 
-# SHOW_MATCH_REGEX="(?P<title>.*)S(?P<season>\d+)E(?P<episode>\d+).*\.(?P<ext>\w+)$"
-
-
 def gen_db(tv_directory,tv_regex,api_key):
     service = thetvdbapi.TheTVDB(api_key)
     regex = re.compile(tv_regex)
@@ -54,9 +51,6 @@ def find_show(service,shows,title):
             showInfo.add_episode(e)
 
         return showInfo
-
-
-
 
 def tag(tag,value):
     return u'<%s>%s</%s>\n' % (tag,value,tag)

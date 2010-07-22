@@ -2,6 +2,7 @@ import string,cgi,time
 import sys
 import shelve
 from os import curdir,sep,path
+import re
 import urllib
 from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
 import ConfigParser
@@ -14,12 +15,9 @@ import videodb
 
 urls = ('/Videos/tv.xml', 'shows',
         '/Videos/(.*)/(.*)/(.*)/play', 'play_episode',
-        '/Videos/(.*)/(.*)/(.*)$', 'get_episode',
+        '/Videos/(.*)/(.*)/(.*)$', 'episode',
         '/Videos/(.*)/(.*)$', 'episodes',
-        '/Videos/(.*)$', 'seasons',
-        '/Videos/http://(.*)', 'images',
-        '/Videos/images/TV/(.*)/.*/poster\.jpg', 'categoryimage',
-        '/Videos/images/(.*)', 'images')
+        '/Videos/(.*)$', 'seasons')
 
 
 class shows:
@@ -61,11 +59,11 @@ class episodes:
 
         str = u'<season>'
         for e in s.episode_list[season].episodes.values():
-            str += e.render_xml()
+            str += e.render_xml(web.ctx.app_root)
         str += u'</season>'
         return str
 
-class get_episode:
+class episode:
     def GET(self,show,season,epi):
         print "trying to get a episode"
         s = find_show(web.ctx.videodb,show)
@@ -76,7 +74,7 @@ class get_episode:
         print s.episode_list[season]
 
         ep = s.get_episode(season,epi)
-        return  ep.render_xml()
+        return  ep.render_xml(web.ctx.app_root)
 
 class play_episode:
     def GET(self,show,season,episode):
@@ -86,54 +84,17 @@ class play_episode:
 
         ep = s.get_episode(season,episode)
 
-        path = ep.file_path
-        raise web.seeother('http://192.168.0.8/%s' % path)
-
-
-
-
-class images:
-    def GET(self,image_url):
-        url = 'http://' +image_url
-        (b,f) = path.split('http://' + url)
-
-        #try:
-        cachedfile = path.join(web.ctx.imagecache, f)
-        urllib.urlretrieve(url,cachedfile)
-        mime_type = mimetypes.guess_type(cachedfile)[0] or 'application/octet-stream'
-        web.header("Content-Type", mime_type)
-        static_file = open(cachedfile, 'rb')
-        #web.ctx.output = static_file
-        return static_file
-        # except:
-        #     web.notfound()
-
-
-
-class categoryimage:
-    def GET(self,series):
-        web.notfound()
-        db = web.ctx.videodb
-        if db.has_key(series):
-            i = IMDb()
-            i.update(db[series])
-            image_url = db[series]['full-size cover url']
-
-
-            (b,f) = path.split(image_url)
-
-            #try:
-            cachedfile = path.join(web.ctx.imagecache, f)
-            urllib.urlretrieve(image_url,cachedfile)
-            mime_type = mimetypes.guess_type(cachedfile)[0] or 'application/octet-stream'
-            web.header("Content-Type", mime_type)
-            static_file = open(cachedfile, 'rb')
-            web.ctx.output = static_file
-            # except:
-            #     web.notfound()
-
+        if web.ctx.static_server:
+            url = re.sub(web.ctx.path_from,web.ctx.path_to,ep.file_path)
+            raise web.seeother(url)
         else:
-            return "Didn't find image for %s season %s" % (series,season)
+            mime_type = mimetypes.guess_type(ep.file_path)[0] or 'application/octet-stream'
+            web.header("Content-Type", mime_type)
+            static_file = open(ep.file_path, 'rb')
+            return static_file
+
+
+
 
 def main():
     config = ConfigParser.RawConfigParser()
@@ -146,21 +107,24 @@ def main():
         print "Opening the database"
         db = shelf['tv']
     else:
-        path = config.get('tv','path')
-        regex = config.get('tv','regex')
-        apikey = config.get('global','apikey')
         db = videodb.gen_db(path,regex,apikey)
         shelf['tv'] = db
         shelf.sync()
 
-    service = IMDb()
-    # if shelf.has_key('tv_index'):
-    #index = shelf['tv_index']
-    # print index.encode('latin-1')
-    #else:
-    # index = videodb.gen_tv_xml(db)
-    # shelf['tv_index'] = index
-    # shelf.sync()
+    path = config.get('tv','path')
+    regex = config.get('tv','regex')
+    apikey = config.get('global','apikey')
+
+    # URL modifications
+    app_root = config.get('global','app_root')
+
+    static_server = config.getboolean('global','static_server')
+    if static_server:
+        path_from = config.get('global','path_from')
+        path_to = config.get('global', 'path_to')
+    else:
+        path_from = None
+        path_to = None
 
 
     # print videodb.gen_tv_xml(db).encode('latin-1')
@@ -168,7 +132,13 @@ def main():
     app = web.application(urls, globals())
     # Apparently this is necessary to pass data to the handler:
     def _wrapper(handler):
+        web.ctx.app_root = app_root
         web.ctx.videodb = db
+        web.ctx.static_server = static_server
+        web.ctx.static_server = static_server
+        web.ctx.path_from = path_from
+        web.ctx.path_to = path_to
+
         # web.ctx.videoindex = index
         web.ctx.imagecache = '/tmp/'
         return handler()
