@@ -4,7 +4,7 @@ import os
 import string
 import thetvdbapi
 
-# SHOW_MATCH_REGEX="b(?P<title>.*)S(?P<season>\d+)E(?P<episode>\d+).*\.(?P<ext>\w+)$"
+# SHOW_MATCH_REGEX="(?P<title>.*)S(?P<season>\d+)E(?P<episode>\d+).*\.(?P<ext>\w+)$"
 
 
 def gen_db(tv_directory,tv_regex,api_key):
@@ -12,8 +12,11 @@ def gen_db(tv_directory,tv_regex,api_key):
     regex = re.compile(tv_regex)
     # shows is a cache of previously found shows.
     shows = { }
+    print "The root directory is %s" % tv_directory
+    print tv_regex
     for root, dirs, files in os.walk(tv_directory, topdown=True):
         for name in files:
+            print name
             info = None
             comp = regex.match(name)
             if comp is not None:

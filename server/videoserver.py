@@ -13,7 +13,8 @@ from imdb import IMDb
 import videodb
 
 urls = ('/Videos/tv.xml', 'shows',
-        '/Videos/(.*)/(.*)/(.*)', 'get_episode',
+        '/Videos/(.*)/(.*)/(.*)/play', 'play_episode',
+        '/Videos/(.*)/(.*)/(.*)$', 'get_episode',
         '/Videos/(.*)/(.*)$', 'episodes',
         '/Videos/(.*)$', 'seasons',
         '/Videos/http://(.*)', 'images',
@@ -42,8 +43,11 @@ class seasons:
 
         print 'found %s' % s
         str = u'<series>\n'
-        for season in s.episode_list.values():
-            str += season.render_xml()
+        season_nums = s.episode_list.keys()
+        season_nums.sort(key=int)
+
+        for season in season_nums:
+            str += s.episode_list[season].render_xml()
 
         str += u'</series>\n'
         return str
@@ -57,9 +61,7 @@ class episodes:
 
         str = u'<season>'
         for e in s.episode_list[season].episodes.values():
-            print e
             str += e.render_xml()
-
         str += u'</season>'
         return str
 
@@ -74,10 +76,18 @@ class get_episode:
         print s.episode_list[season]
 
         ep = s.get_episode(season,epi)
-        str = u'<episode>'
-        str += ep.render_xml()
-        str += u'</episode>'
-        return str
+        return  ep.render_xml()
+
+class play_episode:
+    def GET(self,show,season,episode):
+        s = find_show(web.ctx.videodb,show)
+        if s is None:
+            raise web.notfound()
+
+        ep = s.get_episode(season,episode)
+
+        path = ep.file_path
+        raise web.seeother('http://192.168.0.8/%s' % path)
 
 
 
@@ -133,6 +143,7 @@ def main():
     shelf = shelve.open(cachefile)
 
     if shelf.has_key('tv'):
+        print "Opening the database"
         db = shelf['tv']
     else:
         path = config.get('tv','path')

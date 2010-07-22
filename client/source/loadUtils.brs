@@ -3,16 +3,21 @@
 
 ' Get a list of all shows
 Function loadTV() as Object
-  url = config.baseURL + "tv.xml"
-  data = genericLoadXMLURL(url,"tv")
+
+  ' printAA(m)
+
+  url = m.config.baseURL + "tv.xml"
+  data = genericLoadXMLURL(m.config,url)
 	data.nextLoader = loadSeries
+	'print "Loaded"
+	'printAA(data)
   return data
 End Function
 
 ' Get a list of all movies
 Function loadMovies() as Object
-  url = config.baseURL + "movies.xml"
-  data = genericLoadXMLURL(url,"movies")
+  url = m.config.baseURL + "movies.xml"
+  data = genericLoadXMLURL(m.config,url)
 	data.nextLoader = loadMovie
   return data
 End Function
@@ -21,15 +26,15 @@ End Function
 ' This returns a list of seasons for a series
 Function loadSeries(series as Object) as Object
 	 url = m.config.baseURL + series.Title
-   data = genericLoadXMLURL(url,"series")
+   data = genericLoadXMLURL(m.config,url)
 	 data.nextLoader = loadSeason
 	 return data
 End Function
 
 ' Return a list of episodes in a season
 Function loadSeason(season as Object) as Object
-	 url = m.config.baseURL + series.Title + "/" + season.season
-   data = genericLoadXMLURL(url,"season")
+	 url = m.config.baseURL + m.parent.Title + "/" + season.season
+   data = genericLoadXMLURL(m.config,url)
 	 data.nextLoader = loadEpisode
 
 	 ' A Season is shown using a episodic style
@@ -41,8 +46,14 @@ End Function
 ' Load the data for a episode
 Function loadEpisode(episode as Object) as Object
    ' FIXME: Actually get the show title
-   url = m.config.baseURL + "Weeds" + "/" + "1" + "/" + "1"
-   data = genericLoadXMLURL(url,"episode")
+	 url = m.config.baseURL + episode.series +  "/" + episode.season + "/" + episode.episodeNumber
+
+   ' data = genericLoadXMLURL(m.config,url)
+
+	 data = loadXMLURL(url,episodeLoader)
+	 ' printAA(data)
+	 data.config = m.config
+
 	 data.preShowScreen = preShowDetail
 	 data.showScreen = showDetail
 	 data.nextLoader = invalid
@@ -52,17 +63,20 @@ End Function
 ' Load the data for a movie
 Function loadMovie(movie as Object) as Object
 	 url = m.config.baseURL + movie.Title
-   data = genericLoadXMLURL(url,"movie")
+   data = genericLoadXMLURL(m.config,url)
 	 data.preShowScreen = preShowDetail
 	 data.showScreen = showDetail
 	 data.nextLoader = invalid
 	 return data
 End Function
 
-Function genericLoadXMLURL(url,t) as Object
-  d = loadXMLURL(url, function(xml) return genericLoader(t,xml) end function)
+Function genericLoadXMLURL(config as Object,url as String) as Object
+	print "Loading "; url
+  d = loadXMLURL(url, genericLoader)
+	' printAA(d)
+
 	' Copy the configuration
-	d.config = m.config
+	d.config = config
   return d
 End Function
 
@@ -75,19 +89,20 @@ Function loadXMLURL(url as String, loader as Function) as Object
   xml = CreateObject("roXMLElement")
   if not xml.Parse(rsp) then
 		 print "Can't parse feed"
-		 printXML(xml,10)
+		 ' printXML(xml,10)
 		 return invalid
   endif
 
 	res = loader(xml)
   return res
+
 End Function
 
-Function genericLoader(t as String, xml as Object) as Object
+Function genericLoader(xml as Object) as Object
 
-  o = makeGenericList(t)
-	print "Trying to load"
-	printXML(xml,10)
+  o = makeGenericList(xml.getName())
+	' print "Trying to load"
+	' printXML(xml,10)
 
 	for each sxml in xml.GetChildElements()
       aa = CreateObject("roAssociativeArray")
@@ -95,23 +110,39 @@ Function genericLoader(t as String, xml as Object) as Object
 			o.values.Push(aa)
 	next
 
-	' printAA(o)
-
 	return o
 
 End Function
 
+Function episodeLoader( xml as Object) as Object
+  o = makeGenericObject("episode")
+	' printXML(xml,10)
+	GetXMLintoAA(xml,o)
+  return o
+End Function
 
-Function makeGenericList(t as String) as Object
+Function movieLoader( xml as Object) as Object
+  o = makeGenericObject("movie")
+	GetXMLintoAA(xml,o)
+  return o
+End Function
+
+Function makeGenericObject(t as String) as Object
   o = CreateObject("roAssociativeArray")
-  o.type = t
-	o.values = CreateObject("roArray",100,true)
+	o.type = t
 
   ' The 'display' elements
 	o.preShowScreen = genericPreShowScreen
 	o.showScreen = genericShowScreen
 	o.display = genericDisplay
 
+	return o
+
+End Function
+
+Function makeGenericList(t as String) as Object
+  o = makeGenericObject(t)
+	o.values = CreateObject("roArray",100,true)
 	return o
 
 End Function

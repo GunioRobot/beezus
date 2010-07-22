@@ -1,7 +1,8 @@
 
 Function makeTopLevel() as Object
 
-		top = makeGenericList('toplevel')
+		top = makeGenericList("toplevel")
+
 		top.posterStyle = "flat-category"
 
 		top.nextLoader = loadCategory
@@ -27,10 +28,11 @@ End Function
 ' the 'nextLoader' to simply return the object. However we're not doing that
 ' quite yet.
 Function loadCategory(category as Object) as Object
-   o =  category.catLoader(m.config)
+   o =  category.catLoader()
+	 return o
 End Function
 
-Function makeTVCategory(config) as Object
+Function makeTVCategory(config as Object) as Object
   o = makeGenericList("category")
 	o.catLoader = loadTV
 	o.Title = "TV"
@@ -41,7 +43,7 @@ Function makeTVCategory(config) as Object
 	return o
 End Function
 
-Function makeMoviesCategory(config) as Object
+Function makeMoviesCategory(config as Object) as Object
   o = makeGenericList("category")
 	o.catLoader = loadMovies
 	o.Title = "Movies"
@@ -52,8 +54,10 @@ Function makeMoviesCategory(config) as Object
 	return o
 End Function
 
-Function makeConfigCategory(config) as Object
+Function makeConfigCategory(config as Object) as Object
   o = makeGenericList("category")
+
+
 	' The logic for the configuration is completely different from that of the
   ' browser categories, but we'll not handle that now.
 	o.catLoader = invalid

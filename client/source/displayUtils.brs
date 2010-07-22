@@ -16,7 +16,7 @@ End Function
 
 
 Function genericShowScreen(screen) As Integer
-  print m.values
+  ' print m.values
   screen.SetContentList(m.values)
 	screen.SetFocusedListItem(0)
 	screen.Show()
@@ -29,6 +29,7 @@ Function genericShowScreen(screen) As Integer
 			  idx = msg.GetIndex()
 				data = m.values[idx]
 				newdata = m.nextLoader(data)
+				' printAA(newdata)
 				newdata.parent = data
 				newdata.display()
       else if msg.isScreenClosed() then
@@ -50,6 +51,7 @@ Function preShowDetail(breadA=invalid, breadB=invalid) As Object
     screen = CreateObject("roSpringboardScreen")
     screen.SetDescriptionStyle("video")
     screen.SetMessagePort(port)
+
     ' if breadA<>invalid and breadB<>invalid then
     '     screen.SetBreadcrumbText(breadA, breadB)
     ' end if
@@ -58,13 +60,12 @@ Function preShowDetail(breadA=invalid, breadB=invalid) As Object
 End Function
 
 
-
-
 Function showDetail(screen As Object) As Integer
 
     screen.ClearButtons()
     screen.AddButton(1, "resume playing")
     screen.AddButton(2, "play from beginning")
+
     screen.SetContent(m)
     screen.Show()
 
@@ -75,6 +76,7 @@ Function showDetail(screen As Object) As Integer
     while true
         msg = wait(0, screen.GetMessagePort())
 
+				showIndex = 0
         if type(msg) = "roSpringboardScreenEvent" then
             if msg.isScreenClosed()
                 print "Screen closed"

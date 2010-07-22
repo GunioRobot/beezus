@@ -132,7 +132,7 @@ class TheTVDB(object):
 
             episode_nodes = tree.getiterator("Episode")
             for episode_node in episode_nodes:
-                episodes.append(Episode(episode_node, self.mirror_url))
+                episodes.append(Episode(episode_node, self.mirror_url,show))
 
             show_and_episodes = (show, episodes)
         except SyntaxError:
@@ -250,7 +250,7 @@ class Show(object):
 
 class Episode(object):
     """A python object representing a thetvdb.com episode record."""
-    def __init__(self, node, mirror_url):
+    def __init__(self, node, mirror_url, series=None):
         self.id = node.findtext("id")
         self.show_id = node.findtext("seriesid")
         self.name = node.findtext("EpisodeName")
@@ -263,6 +263,7 @@ class Episode(object):
         self.production_code = node.findtext("ProductionCode")
         self.rating = node.findtext("Rating")
         self.writer = node.findtext("Writer")
+        self.series = series
 
         # Air date
         self.first_aired = TheTVDB.convert_date(node.findtext("FirstAired"))
@@ -314,6 +315,7 @@ class Episode(object):
         str += tag('EpisodeNumber', self.absolute_number)
         str += tag('Episode', self.episode_number)
         str += tag('HDPosterURL', self.poster_url)
+        str += tag('Series', self.series.name)
         return tag('episode',str)
 
 
@@ -343,6 +345,7 @@ class Season:
         str += tag('ShortDescriptionLine1', self.series.name)
         str += tag('ShortDescriptionLine2', u'Season %s' % self.season)
         str += tag('Season', self.season)
+        str += tag('Show', self.series.name)
         return tag('season',str)
 
 
