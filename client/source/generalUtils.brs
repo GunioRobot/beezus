@@ -209,6 +209,7 @@ Function strtobool(obj As dynamic) As Boolean
     o = strTrim(obj)
     o = Lcase(o)
     if o = "true" return true
+		if o = "True" return true
     if o = "t" return true
     if o = "y" return true
     if o = "1" return true

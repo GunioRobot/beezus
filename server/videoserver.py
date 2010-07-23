@@ -15,6 +15,7 @@ import videodb
 
 urls = ('/Videos/tv.xml', 'shows',
         '/Videos/(.*)/(.*)/(.*)/play', 'play_episode',
+        '/Videos/(.*)/(.*)/(.*)/position', 'set_position',
         '/Videos/(.*)/(.*)/(.*)$', 'episode',
         '/Videos/(.*)/(.*)$', 'episodes',
         '/Videos/(.*)$', 'seasons')
@@ -79,6 +80,19 @@ class episode:
         ep = s.get_episode(season,epi)
         return  ep.render_xml(web.ctx.app_root)
 
+class set_position:
+    def POST(self,show,season,episode,position=None):
+        data = web.data()
+        s = find_show(web.ctx.videodb,show)
+        if s is None:
+            raise web.notfound()
+
+        ep = s.get_episode(season,episode)
+        ep.pos = data
+        web.ctx.shelf['tv'] = web.ctx.videodb
+        web.ctx.shelf.sync()
+
+
 class play_episode:
     def GET(self,show,season,episode):
         s = find_show(web.ctx.videodb,show)
@@ -86,6 +100,10 @@ class play_episode:
             raise web.notfound()
 
         ep = s.get_episode(season,episode)
+        ep.watched = True
+        web.ctx.shelf['tv'] = web.ctx.videodb
+        web.ctx.shelf.sync()
+
 
         if web.ctx.static_server:
             url = re.sub(web.ctx.path_from,web.ctx.path_to,ep.file_path)
@@ -106,17 +124,19 @@ def main():
     cachefile = config.get('global','dbcache')
     shelf = shelve.open(cachefile)
 
+    path = config.get('tv','path')
+    regex = config.get('tv','regex')
+    apikey = config.get('global','apikey')
+
     if shelf.has_key('tv'):
         print "Opening the database"
         db = shelf['tv']
     else:
         db = videodb.gen_db(path,regex,apikey)
+
         shelf['tv'] = db
         shelf.sync()
 
-    path = config.get('tv','path')
-    regex = config.get('tv','regex')
-    apikey = config.get('global','apikey')
 
     # URL modifications
     app_root = config.get('global','app_root')
@@ -137,10 +157,12 @@ def main():
     def _wrapper(handler):
         web.ctx.app_root = app_root
         web.ctx.videodb = db
+        web.ctx.shelf = shelf
         web.ctx.static_server = static_server
         web.ctx.static_server = static_server
         web.ctx.path_from = path_from
         web.ctx.path_to = path_to
+
 
         # web.ctx.videoindex = index
         web.ctx.imagecache = '/tmp/'

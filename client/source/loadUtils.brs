@@ -46,12 +46,12 @@ End Function
 ' Load the data for a episode
 Function loadEpisode(episode as Object) as Object
    ' FIXME: Actually get the show title
-	 printAA(episode)
-	 print m.config.baseURL
-	 print m.config.baseURL + episode.series
-	 print m.config.baseURL + episode.series + "/"
-	 print m.config.baseURL + episode.series + "/" + episode.season
-	 print m.config.baseURL + episode.series + "/" + episode.season + "/"
+	 ' printAA(episode)
+	 ' print m.config.baseURL
+	 ' print m.config.baseURL + episode.series
+	 ' print m.config.baseURL + episode.series + "/"
+	 ' print m.config.baseURL + episode.series + "/" + episode.season
+	 ' print m.config.baseURL + episode.series + "/" + episode.season + "/"
 	 ' print m.config.baseURL + episode.series + "/" + episode.season + "/" + str(episode.episode)
 
 	 url = m.config.baseURL + episode.series +  "/" + episode.season + "/" + episode.episode
@@ -126,13 +126,25 @@ Function episodeLoader( xml as Object) as Object
   o = makeGenericObject("episode")
 	printXML(xml,10)
 	GetXMLintoAA(xml,o)
+
 	list = CreateObject("roArray", 100, true)
 	for each s in xml.stream
 	  aa = { }
 		GetXMLintoAA(s,aa)
+		aa.stickyredirects = strToBool(aa.stickyredirects)
 		list.push(aa)
 	next
 	o.streams = list
+
+	list = CreateObject("roArray", 4, true)
+	for each actor in xml.actors.actor
+	  list.push(actor.GetBody())
+	next
+	o.actors = list
+
+	print o.watched
+ 	o.watched = strToBool(o.watched)
+
 	printAA(o)
   return o
 

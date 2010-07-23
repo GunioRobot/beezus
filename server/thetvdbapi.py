@@ -298,6 +298,9 @@ class Episode(object):
         # When this episode was last updated
         self.last_updated = datetime.datetime.fromtimestamp(int(node.findtext("lastupdated")))
 
+        # Handling play history
+        self.watched = False
+        self.pos = 0
 
     def __str__(self):
         return repr(self)
@@ -311,11 +314,14 @@ class Episode(object):
         str += tag('Description', self.overview)
         str += tag('Season', self.season_number)
         if self.rating:
-            str += tag('Rating', float(self.rating) * 10)
+            str += tag('StarRating', float(self.rating) * 10)
+        str += tag('Rating',self.series.content_rating)
         str += tag('EpisodeNumber', self.absolute_number)
         str += tag('Episode', self.episode_number)
         str += tag('HDPosterURL', self.poster_url)
         str += tag('Series', self.series.name)
+        str += tag('ReleaseDate', self.first_aired)
+
         # FIXME: Generate the stream properly
         try:
             url = '%s/%s/%s/%s/play' % (server_url,self.series.name,self.season_number, self.episode_number)
@@ -324,10 +330,25 @@ class Episode(object):
             stream += tag('bitrate', 200)
             stream += tag('quality', 'false')
             stream += tag('contentid', self.id)
-            stream += tag('stickyredirects', 'false')
+            stream += tag('stickyredirects', 'true')
             str += tag('stream',stream)
+        except:
+            pass
+
+        try:
+            actors = ''
+            for a in self.series.actors[:2]:
+                actors += tag('actor',a)
+
+            tag('actors',actors)
+            str += tag('actors',actors)
         except Exception as e:
             print e
+
+        str += tag('Director', self.director)
+
+        str += tag('Watched', self.watched)
+        str += tag('Position',self.pos)
 
         return tag('episode',str)
 
@@ -354,7 +375,7 @@ class Season:
         str += tag('Title', self.series.name)
         str += tag('SeasonTitle',self.series.name + u' Season %s' % self.season)
         str += tag('HDPosterURL', self.series.poster_url)
-        str += tag('Rating', float(self.series.rating) * 10)
+        str += tag('StarRating', float(self.series.rating) * 10)
         str += tag('ShortDescriptionLine1', self.series.name)
         str += tag('ShortDescriptionLine2', u'Season %s' % self.season)
         str += tag('Season', self.season)

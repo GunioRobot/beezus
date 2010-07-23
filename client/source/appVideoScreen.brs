@@ -60,6 +60,15 @@ Function showVideoScreen(episode As Object)
 
 End Function
 
-Function savePosition(episode as Object, pos as String)
+Function savePosition(episode as Object, position as String) as String
+
+  print "Saving Position"
+	url = episode.config.baseURL + episode.series +  "/" + episode.season + "/" + episode.episode + "/position"
+  http = NewHTTP(url)
+
+	timeout = 5
+
+
+	http.PostFromStringWithTimeout(position, 5)
 
 End Function

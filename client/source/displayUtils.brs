@@ -50,11 +50,17 @@ Function preShowDetail(breadA=invalid, breadB=invalid) As Object
     port=CreateObject("roMessagePort")
     screen = CreateObject("roSpringboardScreen")
     screen.SetDescriptionStyle("video")
+
+		' Disabling, for now
+		screen.AllowNavLeft(false)
+		screen.AllowNavRight(false)
+
     screen.SetMessagePort(port)
 
     ' if breadA<>invalid and breadB<>invalid then
     '     screen.SetBreadcrumbText(breadA, breadB)
     ' end if
+		screen.SetBreadcrumbText(m.series, "Season" + m.season)
 
     return screen
 End Function
@@ -63,8 +69,12 @@ End Function
 Function showDetail(screen As Object) As Integer
 
     screen.ClearButtons()
-    screen.AddButton(1, "resume playing")
-    screen.AddButton(2, "play from beginning")
+		if m.watched then
+		    screen.AddButton(1, "resume playing")
+				screen.AddButton(2, "play from beginning")
+    else
+		    screen.AddButton(2, "play")
+		end if
 
     screen.SetContent(m)
     screen.Show()
@@ -99,7 +109,7 @@ Function showDetail(screen As Object) As Integer
                 print "ButtonPressed"
                 if msg.GetIndex() = 1
                     ' PlayStart = RegRead(showList[showIndex].ContentId)
-										PlayStart = 0
+										m.PlayStart = strtoi(m.position)
                     ' if PlayStart <> invalid then
                     '    showList[showIndex].PlayStart = PlayStart.ToInt()
                     'endif
@@ -107,6 +117,7 @@ Function showDetail(screen As Object) As Integer
                 endif
                 if msg.GetIndex() = 2
                     ' showList[showIndex].PlayStart = 0
+										m.PlayStart = 0
                     showVideoScreen(m)
                 endif
                 if msg.GetIndex() = 3
