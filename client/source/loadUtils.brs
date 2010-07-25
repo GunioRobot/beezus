@@ -6,7 +6,7 @@ Function loadTV() as Object
 
   ' printAA(m)
 
-  url = m.config.baseURL + "tv.xml"
+  url = m.config.baseURL + "tv/"
   data = genericLoadXMLURL(m.config,url)
 	data.nextLoader = loadSeries
 	'print "Loaded"
@@ -16,7 +16,7 @@ End Function
 
 ' Get a list of all movies
 Function loadMovies() as Object
-  url = m.config.baseURL + "movies.xml"
+  url = m.config.baseURL + "movies/"
   data = genericLoadXMLURL(m.config,url)
 	data.nextLoader = loadMovie
   return data
@@ -25,7 +25,7 @@ End Function
 
 ' This returns a list of seasons for a series
 Function loadSeries(series as Object) as Object
-	 url = m.config.baseURL + series.Title
+	 url = m.config.baseURL + "tv/" + series.Title
    data = genericLoadXMLURL(m.config,url)
 	 data.nextLoader = loadSeason
 	 return data
@@ -33,7 +33,7 @@ End Function
 
 ' Return a list of episodes in a season
 Function loadSeason(season as Object) as Object
-	 url = m.config.baseURL + m.parent.Title + "/" + season.season
+	 url = m.config.baseURL + "tv/"+ m.parent.Title + "/" + season.season
    data = genericLoadXMLURL(m.config,url)
 	 data.nextLoader = loadEpisode
 
@@ -54,7 +54,7 @@ Function loadEpisode(episode as Object) as Object
 	 ' print m.config.baseURL + episode.series + "/" + episode.season + "/"
 	 ' print m.config.baseURL + episode.series + "/" + episode.season + "/" + str(episode.episode)
 
-	 url = m.config.baseURL + episode.series +  "/" + episode.season + "/" + episode.episode
+	 url = m.config.baseURL + "tv/" + episode.series +  "/" + episode.season + "/" + episode.episode
 
    ' data = genericLoadXMLURL(m.config,url)
 
@@ -70,7 +70,7 @@ End Function
 
 ' Load the data for a movie
 Function loadMovie(movie as Object) as Object
-	 url = m.config.baseURL + movie.Title
+	 url = m.config.baseURL + "movies/" + movie.Title
    data = genericLoadXMLURL(m.config,url)
 	 data.preShowScreen = preShowDetail
 	 data.showScreen = showDetail
