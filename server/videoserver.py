@@ -12,20 +12,42 @@ import mimetypes
 from imdb import IMDb
 
 import videodb
+from videodb import Movie
 
 urls = ('/Videos/tv.xml', 'shows',
-        '/Videos/(.*)/(.*)/(.*)/play', 'play_episode',
-        '/Videos/(.*)/(.*)/(.*)/position', 'set_position',
-        '/Videos/(.*)/(.*)/(.*)$', 'episode',
-        '/Videos/(.*)/(.*)$', 'episodes',
-        '/Videos/(.*)$', 'seasons')
+        '/Videos/tv/','shows',
+        '/Videos/tv/(.+)/(\d+)/(\d+)/play', 'play_episode',
+        '/Videos/tv/(.+)/(\d+)/(\d+)/position', 'set_episode_position',
+        '/Videos/tv/(.+)/(\d+)/(\d+)$', 'episode',
+        '/Videos/tv/(.+)/(\d+)$', 'episodes',
+        '/Videos/tv/(.+)$', 'seasons',
+        # Movies
+        '/Videos/movies/(.+)/position', 'set_movie_position',
+        '/Videos/movies/(.+)/play', 'play_movie',
+        '/Videos/movies/(.+)', 'movie',
+        '/Videos/movies/', 'movies',
+        )
+
+class movies:
+    def GET(self):
+        str = "<movies>\n"
+        for m in web.ctx.db['movies'].values():
+            str += m.render_xml(web.ctx.app_root)
+        str += "</movies>"
+        return str
+
+class movie:
+    def GET(self, title):
+        movie = web.ctx.db['movies'][title]
+        return movie.render_xml(web.ctx.app_root)
+
 
 
 class shows:
     def GET(self):
         # return "Hello, World"
         str = "<tv>\n"
-        for s in web.ctx.videodb.values():
+        for s in web.ctx.db['tv'].values():
             str += s.render_xml()
         str += "</tv>"
         return str
@@ -35,7 +57,7 @@ class seasons:
     def GET(self,show):
         print 'looking for %s' % show
 
-        s = find_show(web.ctx.videodb,show)
+        s = find_show(web.ctx.db['tv'],show)
 
         if s is None:
             raise web.notfound()
@@ -53,7 +75,7 @@ class seasons:
 
 class episodes:
     def GET(self,show,season):
-        s = find_show(web.ctx.videodb,show)
+        s = find_show(web.ctx.db['tv'],show)
 
         if s is None:
             raise web.notfound()
@@ -70,7 +92,7 @@ class episodes:
 class episode:
     def GET(self,show,season,epi):
         print "trying to get a episode"
-        s = find_show(web.ctx.videodb,show)
+        s = find_show(web.ctx.db['tv'],show)
 
         if s is None:
             raise web.notfound()
@@ -80,39 +102,58 @@ class episode:
         ep = s.get_episode(season,epi)
         return  ep.render_xml(web.ctx.app_root)
 
-class set_position:
-    def POST(self,show,season,episode,position=None):
+class set_episode_position:
+    def POST(self,show,season,episode,position=0):
         data = web.data()
-        s = find_show(web.ctx.videodb,show)
+        s = find_show(web.ctx.db['tv'],show)
         if s is None:
             raise web.notfound()
 
         ep = s.get_episode(season,episode)
-        ep.pos = data
-        web.ctx.shelf['tv'] = web.ctx.videodb
-        web.ctx.shelf.sync()
+        set_position(ep,data)
+
+class set_movie_position:
+    def POST(self,show,season,episode,position=0):
+        data = web.data()
+        movie = web.ctx.db['movies']['title']
+        if movie is None:
+            raise web.notfound()
+
+        set_position(movie,data)
+
+def set_position(media,pos):
+    media.pos = pos
+    web.ctx.db.sync()
+
+
+def play_media(media):
+    media.watched = True
+    web.ctx.db.sync()
+
+    if web.ctx.static_server:
+        url = re.sub(web.ctx.path_from,web.ctx.path_to,ep.file_path)
+        raise web.seeother(url)
+    else:
+        mime_type = mimetypes.guess_type(ep.file_path)[0] or 'application/octet-stream'
+        web.header("Content-Type", mime_type)
+        static_file = open(ep.file_path, 'rb')
+        return static_file
 
 
 class play_episode:
     def GET(self,show,season,episode):
-        s = find_show(web.ctx.videodb,show)
+        s = find_show(web.ctx.db['tv'],show)
         if s is None:
             raise web.notfound()
-
         ep = s.get_episode(season,episode)
-        ep.watched = True
-        web.ctx.shelf['tv'] = web.ctx.videodb
-        web.ctx.shelf.sync()
+        play_media(ep)
 
-
-        if web.ctx.static_server:
-            url = re.sub(web.ctx.path_from,web.ctx.path_to,ep.file_path)
-            raise web.seeother(url)
-        else:
-            mime_type = mimetypes.guess_type(ep.file_path)[0] or 'application/octet-stream'
-            web.header("Content-Type", mime_type)
-            static_file = open(ep.file_path, 'rb')
-            return static_file
+class play_movie:
+    def GET(self,movie):
+        m = web.ctx.db[movie]
+        if s is None:
+            raise web.notfound()
+        play_media(m)
 
 
 
@@ -120,23 +161,13 @@ class play_episode:
 def main():
     config = ConfigParser.RawConfigParser()
     config.read('/etc/mc.config')
-
-    cachefile = config.get('global','dbcache')
-    shelf = shelve.open(cachefile)
-
     path = config.get('tv','path')
     regex = config.get('tv','regex')
     apikey = config.get('global','apikey')
 
-    if shelf.has_key('tv'):
-        print "Opening the database"
-        db = shelf['tv']
-    else:
-        db = videodb.gen_db(path,regex,apikey)
 
-        shelf['tv'] = db
-        shelf.sync()
-
+    cachefile = config.get('global','dbcache')
+    db = shelve.open(cachefile)
 
     # URL modifications
     app_root = config.get('global','app_root')
@@ -156,9 +187,7 @@ def main():
     # Apparently this is necessary to pass data to the handler:
     def _wrapper(handler):
         web.ctx.app_root = app_root
-        web.ctx.videodb = db
-        web.ctx.shelf = shelf
-        web.ctx.static_server = static_server
+        web.ctx.db = db
         web.ctx.static_server = static_server
         web.ctx.path_from = path_from
         web.ctx.path_to = path_to
@@ -170,6 +199,7 @@ def main():
 
     app.add_processor(_wrapper)
     app.run()
+
 
 if __name__ == '__main__':
     main()

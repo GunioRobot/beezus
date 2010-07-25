@@ -17,6 +17,8 @@ Function makeTopLevel() as Object
 		' The 'movies' category
 		top.values.Push(makeMoviesCategory(config))
 
+		' Adding in the configuration
+		top.values.Push(makeConfigCategory(config))
 
 		return top
 End Function
@@ -57,13 +59,12 @@ End Function
 Function makeConfigCategory(config as Object) as Object
   o = makeGenericList("category")
 
-
 	' The logic for the configuration is completely different from that of the
   ' browser categories, but we'll not handle that now.
-	o.catLoader = invalid
+	o.catLoader = configScreen
 
 	o.Title = "Configuration"
-	o.ShortDescriptionLine1 = "Movies"
+	o.ShortDescriptionLine1 = "Configure"
 	o.HDPosterURL = "pkg://images/category/config.png"
 	o.config = config
 	return o

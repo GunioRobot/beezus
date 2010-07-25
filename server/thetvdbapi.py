@@ -324,7 +324,7 @@ class Episode(object):
 
         # FIXME: Generate the stream properly
         try:
-            url = '%s/%s/%s/%s/play' % (server_url,self.series.name,self.season_number, self.episode_number)
+            url = '%s/tv/%s/%s/%s/play' % (server_url,self.series.name,self.season_number, self.episode_number)
 
             stream = tag('url', url)
             stream += tag('bitrate', 200)
@@ -345,7 +345,7 @@ class Episode(object):
         except Exception as e:
             print e
 
-        str += tag('Director', self.director)
+        # str += tag('Director', self.director)
 
         str += tag('Watched', self.watched)
         str += tag('Position',self.pos)

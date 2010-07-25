@@ -97,6 +97,7 @@ Function loadXMLURL(url as String, loader as Function) as Object
   xml = CreateObject("roXMLElement")
   if not xml.Parse(rsp) then
 		 print "Can't parse feed"
+		 ShowConnectionFailed()
 		 ' printXML(xml,10)
 		 return invalid
   endif
