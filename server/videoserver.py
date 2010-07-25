@@ -131,12 +131,13 @@ def play_media(media):
     web.ctx.db.sync()
 
     if web.ctx.static_server:
-        url = re.sub(web.ctx.path_from,web.ctx.path_to,ep.file_path)
+        url = re.sub(web.ctx.path_from,web.ctx.path_to,media.file_path)
+        print 'Playing %s' % url
         raise web.seeother(url)
     else:
-        mime_type = mimetypes.guess_type(ep.file_path)[0] or 'application/octet-stream'
+        mime_type = mimetypes.guess_type(media.file_path)[0] or 'application/octet-stream'
         web.header("Content-Type", mime_type)
-        static_file = open(ep.file_path, 'rb')
+        static_file = open(media.file_path, 'rb')
         return static_file
 
 
@@ -150,8 +151,8 @@ class play_episode:
 
 class play_movie:
     def GET(self,movie):
-        m = web.ctx.db[movie]
-        if s is None:
+        m = web.ctx.db['movies'][movie]
+        if m is None:
             raise web.notfound()
         play_media(m)
 

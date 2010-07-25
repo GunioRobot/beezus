@@ -52,6 +52,7 @@ Function makeMoviesCategory(config as Object) as Object
 	o.ShortDescriptionLine1 = "Movies"
 	o.HDPosterURL = "pkg://images/category/movies.png"
 
+	o.nextLoader = loadMovie
 	o.config = config
 	return o
 End Function
@@ -61,12 +62,20 @@ Function makeConfigCategory(config as Object) as Object
 
 	' The logic for the configuration is completely different from that of the
   ' browser categories, but we'll not handle that now.
-	o.catLoader = configScreen
+	o.catLoader = configLoader
 
 	o.Title = "Configuration"
 	o.ShortDescriptionLine1 = "Configure"
 	o.HDPosterURL = "pkg://images/category/config.png"
 	o.config = config
+
+	o.preShowScreen = configPreShowScreen
+	o.showScreen = configShowScreen
+
 	return o
 
+End Function
+
+Function configLoader() as Object
+  return m
 End Function

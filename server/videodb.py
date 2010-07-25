@@ -38,6 +38,7 @@ def gen_tv_db(tv_directory,tv_regex,api_key, shows={}):
     return shows
 
 def find_show(service,shows,title):
+    print 'Looking for %s' % title
     if not shows.has_key(title):
         print 'looking for show %s' % title
         showids = service.get_matching_shows(title)
@@ -45,6 +46,7 @@ def find_show(service,shows,title):
         print 'got %s results' % showids
         (showid,_) = showids[0]
         (showInfo, episodes) = service.get_show_and_episodes(showid)
+        print service.get_show_image_choices(showid)
 
         shows[title] = showInfo
         elist = {}
@@ -66,6 +68,10 @@ class Movie:
         for c in movie['certificates']:
             if c[:3] == 'USA':
                 self.content_rating = c[4:]
+
+
+        self.watched = False
+        self.pos = 0
 
     def render_xml(self,server_url=None):
         str = u''
@@ -102,6 +108,9 @@ class Movie:
             str += tag('actors',actors)
         except Exception as e:
             print e
+
+        str += tag('Watched', self.watched)
+        str += tag('Position',self.pos)
 
         return tag('movie',str)
 

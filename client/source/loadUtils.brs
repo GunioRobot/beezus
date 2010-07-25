@@ -35,10 +35,12 @@ End Function
 Function loadSeason(season as Object) as Object
 	 url = m.config.baseURL + "tv/"+ m.parent.Title + "/" + season.season
    data = genericLoadXMLURL(m.config,url)
-	 data.nextLoader = loadEpisode
+	 if data <> invalid
+     data.nextLoader = loadEpisode
 
-	 ' A Season is shown using a episodic style
-	 data.posterStyle = "flat-episodic"
+	   ' A Season is shown using a episodic style
+		 data.posterStyle = "flat-episodic"
+	 end if
 
 	 return data
 End Function
@@ -47,12 +49,6 @@ End Function
 Function loadEpisode(episode as Object) as Object
    ' FIXME: Actually get the show title
 	 ' printAA(episode)
-	 ' print m.config.baseURL
-	 ' print m.config.baseURL + episode.series
-	 ' print m.config.baseURL + episode.series + "/"
-	 ' print m.config.baseURL + episode.series + "/" + episode.season
-	 ' print m.config.baseURL + episode.series + "/" + episode.season + "/"
-	 ' print m.config.baseURL + episode.series + "/" + episode.season + "/" + str(episode.episode)
 
 	 url = m.config.baseURL + "tv/" + episode.series +  "/" + episode.season + "/" + episode.episode
 
@@ -71,7 +67,9 @@ End Function
 ' Load the data for a movie
 Function loadMovie(movie as Object) as Object
 	 url = m.config.baseURL + "movies/" + movie.Title
-   data = genericLoadXMLURL(m.config,url)
+   ' data = genericLoadXMLURL(m.config,url)
+	 data = loadXMLURL(url,movieLoader)
+
 	 data.preShowScreen = preShowDetail
 	 data.showScreen = showDetail
 	 data.nextLoader = invalid
@@ -83,8 +81,10 @@ Function genericLoadXMLURL(config as Object,url as String) as Object
   d = loadXMLURL(url, genericLoader)
 	' printAA(d)
 
-	' Copy the configuration
-	d.config = config
+	if d <> invalid then
+    ' Copy the configuration
+    d.config = config
+  end if
   return d
 End Function
 
@@ -97,7 +97,7 @@ Function loadXMLURL(url as String, loader as Function) as Object
   xml = CreateObject("roXMLElement")
   if not xml.Parse(rsp) then
 		 print "Can't parse feed"
-		 ShowConnectionFailed()
+		 ' ShowConnectionFailed()
 		 ' printXML(xml,10)
 		 return invalid
   endif
@@ -152,9 +152,31 @@ Function episodeLoader( xml as Object) as Object
 End Function
 
 Function movieLoader( xml as Object) as Object
-  o = makeGenericObject("movie")
+  o = makeGenericObject("episode")
+	printXML(xml,10)
 	GetXMLintoAA(xml,o)
+
+	list = CreateObject("roArray", 100, true)
+	for each s in xml.stream
+	  aa = { }
+		GetXMLintoAA(s,aa)
+		aa.stickyredirects = strToBool(aa.stickyredirects)
+		list.push(aa)
+	next
+	o.streams = list
+
+	list = CreateObject("roArray", 4, true)
+	for each actor in xml.actors.actor
+	  list.push(actor.GetBody())
+	next
+	o.actors = list
+
+	print o.watched
+ 	o.watched = strToBool(o.watched)
+
+	printAA(o)
   return o
+
 End Function
 
 Function makeGenericObject(t as String) as Object

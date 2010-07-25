@@ -29,9 +29,13 @@ Function genericShowScreen(screen) As Integer
 			  idx = msg.GetIndex()
 				data = m.values[idx]
 				newdata = m.nextLoader(data)
-				' printAA(newdata)
-				newdata.parent = data
-				newdata.display()
+				if newdata <> invalid then
+				  ' printAA(newdata)
+				  newdata.parent = data
+				  newdata.display()
+				else
+				  ShowErrorDialog("Could not load data", "Connection Error")
+				end if
       else if msg.isScreenClosed() then
 			  return -1
       end if
@@ -60,7 +64,8 @@ Function preShowDetail(breadA=invalid, breadB=invalid) As Object
     ' if breadA<>invalid and breadB<>invalid then
     '     screen.SetBreadcrumbText(breadA, breadB)
     ' end if
-		screen.SetBreadcrumbText(m.series, "Season" + m.season)
+		' FIXME: Need to set the breadcrumb
+		' screen.SetBreadcrumbText(m.series, "Season" + m.season)
 
     return screen
 End Function

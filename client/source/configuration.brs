@@ -16,8 +16,19 @@ Function makeConfiguration() as Object
 
 End Function
 
+Function configPreShowScreen() as Object
+		screen = CreateObject("roKeyboardScreen")
+		port	= CreateObject("roMessagePort")
+		screen.SetMessagePort(port)
+		screen.SetTitle("Configure server URL")
+		screen.SetDisplayText("Set the URL of the media server")
+		' screen.SetMaxLength(8)
+		screen.AddButton(1, "finished")
+		screen.AddButton(2, "back")
+    return screen
+End Function
 
-Function configScreen() as Integer
+Function configShowScreen(screen as Object) as Integer
   config = m.config
   reg = CreateObject("roRegistry")
   app = CreateObject("roRegistrySection","Beezus")
@@ -27,15 +38,7 @@ Function configScreen() as Integer
     url = ""
   end if
 
-		screen = CreateObject("roKeyboardScreen")
-		port	= CreateObject("roMessagePort")
-		screen.SetMessagePort(port)
-		screen.SetTitle("Configure server URL")
 		screen.SetText(url)
-		screen.SetDisplayText("Set the URL of the media server")
-		' screen.SetMaxLength(8)
-		screen.AddButton(1, "finished")
-		screen.AddButton(2, "back")
 		screen.Show()
 
 		while true
