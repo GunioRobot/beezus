@@ -12,7 +12,7 @@ def gen_tv_db(tv_directory,tv_regex,api_key, shows={}):
     regex = re.compile(tv_regex)
     # shows is a cache of previously found shows.
     print "The root directory is %s" % tv_directory
-    print tv_regex
+    # print tv_regex
     for root, dirs, files in os.walk(tv_directory, topdown=True):
         for name in files:
             info = None
@@ -24,7 +24,7 @@ def gen_tv_db(tv_directory,tv_regex,api_key, shows={}):
 
                 if show_info:
                     s,e = (info['season'], info['episode'])
-                    print "show_info.get_episode(str(int(%s)),str(int(%s)))" % (s , e)
+                    # print "show_info.get_episode(str(int(%s)),str(int(%s)))" % (s , e)
                     episode = show_info.get_episode(str(int(s)),str(int(e)))
                     episode.file_path = os.path.join(root,name)
 
@@ -43,15 +43,28 @@ def find_show(service,shows,title):
         print 'looking for show %s' % title
         showids = service.get_matching_shows(title)
 
-        print 'got %s results' % showids
+        print 'got %s as results' % showids
         (showid,_) = showids[0]
         (showInfo, episodes) = service.get_show_and_episodes(showid)
-        print service.get_show_image_choices(showid)
+        # print service.get_show_image_choices(showid)
 
         shows[title] = showInfo
         elist = {}
         for e in episodes:
             showInfo.add_episode(e)
+
+        # Now fix up the season images
+        season_images = service.get_season_images(showid)
+
+        for (season, season_info) in showInfo.episode_list.iteritems():
+            # Just grab the first one
+            try:
+                url = season_images[season][0]
+            except:
+                url = showInfo.poster_url
+
+            season_info.poster_url = url
+            # print url
 
         return showInfo
 

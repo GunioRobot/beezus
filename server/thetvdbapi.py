@@ -138,6 +138,7 @@ class TheTVDB(object):
         except SyntaxError:
             pass
 
+
         return show_and_episodes
 
     def get_updated_shows(self, period = "day"):
@@ -179,6 +180,27 @@ class TheTVDB(object):
 
         return images
 
+
+    def get_season_images(self,show_id):
+
+        regex = re.compile('.*/banners/seasons/(?P<show>\d+)-(?P<season>\d+)(-(?P<num>\d+))?.*')
+        images = self.get_show_image_choices(show_id)
+        # print images
+
+        season_images = { }
+        for banner_path, banner_type  in images:
+            if banner_type == 'season':
+                print 'Found a banner'
+
+                comp = regex.match(banner_path)
+                if comp:
+                    info = comp.groupdict()
+                    if season_images.has_key(info['season']):
+                        season_images[info['season']].append(banner_path)
+                    else:
+                        season_images[info['season']] = [ banner_path ]
+
+        return season_images
 
 
 
@@ -366,7 +388,7 @@ class Season:
 
     def get_episode(self,episode):
 
-        print self.episodes[episode]
+        # print self.episodes[episode]
         return self.episodes[episode]
 
     def render_xml(self):
@@ -374,7 +396,7 @@ class Season:
         str += tag('ContentType',u'season')
         str += tag('Title', self.series.name)
         str += tag('SeasonTitle',self.series.name + u' Season %s' % self.season)
-        str += tag('HDPosterURL', self.series.poster_url)
+        str += tag('HDPosterURL', self.poster_url)
         str += tag('StarRating', float(self.series.rating) * 10)
         str += tag('ShortDescriptionLine1', self.series.name)
         str += tag('ShortDescriptionLine2', u'Season %s' % self.season)
