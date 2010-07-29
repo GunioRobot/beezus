@@ -14,6 +14,7 @@ from imdb import IMDb
 import videodb
 from videodb import Movie
 
+render = web.template.render('templates/', cache=False)
 urls = ('/Videos/tv.xml', 'shows',
         '/Videos/tv/','shows',
         '/Videos/tv/(.+)/(\d+)/(\d+)/play', 'play_episode',
@@ -30,27 +31,21 @@ urls = ('/Videos/tv.xml', 'shows',
 
 class movies:
     def GET(self):
-        str = "<movies>\n"
-        for m in web.ctx.db['movies'].values():
-            str += m.render_xml(web.ctx.app_root)
-        str += "</movies>"
-        return str
+        web.header('Content-Type', 'text/xml')
+        return render.movies(web.ctx.db['movies'].values(), web.ctx.app_root,render)
+
 
 class movie:
     def GET(self, title):
         movie = web.ctx.db['movies'][title]
-        return movie.render_xml(web.ctx.app_root)
-
+        web.header('Content-Type', 'text/xml')
+        return render.movie(movie, web.ctx.app_root)
 
 
 class shows:
     def GET(self):
-        # return "Hello, World"
-        str = "<tv>\n"
-        for s in web.ctx.db['tv'].values():
-            str += s.render_xml()
-        str += "</tv>"
-        return str
+        web.header('Content-Type', 'text/xml')
+        return render.shows(web.ctx.db['tv'].values(), render)
 
 
 class seasons:
@@ -62,16 +57,17 @@ class seasons:
         if s is None:
             raise web.notfound()
 
-        print 'found %s' % s
-        str = u'<series>\n'
+
         season_nums = s.episode_list.keys()
         season_nums.sort(key=int)
 
+        sorted = []
         for season in season_nums:
-            str += s.episode_list[season].render_xml()
+            sorted.append(s.episode_list[season])
 
-        str += u'</series>\n'
-        return str
+        web.header('Content-Type', 'text/xml')
+        return render.seasons(sorted,render)
+
 
 class episodes:
     def GET(self,show,season):
@@ -80,14 +76,9 @@ class episodes:
         if s is None:
             raise web.notfound()
 
-        str = u'<season>'
-        episode_nums = s.episode_list[season].episodes.keys()
-        episode_nums.sort(key=int)
+        web.header('Content-Type', 'text/xml')
+        return render.episodes(s.episode_list[season],web.ctx.app_root,render)
 
-        for e in episode_nums:
-            str += s.episode_list[season].episodes[e].render_xml(web.ctx.app_root)
-        str += u'</season>'
-        return str
 
 class episode:
     def GET(self,show,season,epi):
@@ -100,7 +91,8 @@ class episode:
         print s.episode_list[season]
 
         ep = s.get_episode(season,epi)
-        return  ep.render_xml(web.ctx.app_root)
+        return render.episode(ep,web.ctx.app_root)
+
 
 class set_episode_position:
     def POST(self,show,season,episode,position=0):

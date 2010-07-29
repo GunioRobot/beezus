@@ -1,0 +1,7 @@
+$def with (movies, app_root, render)
+<movies>
+
+$for m in movies:
+  $:render.movie(m,app_root)
+
+</movies>

@@ -1,0 +1,26 @@
+$def with (movie, server_url=None)
+<movie>
+<ContentType>movie</ContentType>
+<Title>$movie.name</Title>
+<ShortDescriptionLine1>$movie.name</ShortDescriptionLine1>
+<Description>$movie.overview</Description>
+$if movie.rating:
+  <StarRating>$(float(movie.rating) * 10)</StarRating>
+<HDPosterURL>$movie.poster_url</HDPosterURL>
+<Rating>$movie.content_rating</Rating>
+<stream>
+<url>$('%s/movies/%s/play' % (server_url,movie.name))</url>
+<bitrate>200</bitrate>
+<quality>false</quality>
+<stickyredirects>true</stickyredirects>
+</stream>
+
+<actors>
+$for a in movie.actors[:2]:
+  <actor>$a</actor>
+</actors>
+
+<Watched>$movie.watched</Watched>
+<Position>$movie.pos</Position>
+
+</movie>

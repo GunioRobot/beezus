@@ -258,16 +258,6 @@ class Show(object):
 
     def get_episode(self,season, episode):
         return self.episode_list[season].get_episode(episode)
-    def render_xml(self):
-        str = u''
-        str += tag('ContentType',u'series')
-        str += tag('Description', self.overview)
-        str += tag('ShortDescriptionLine1',self.name)
-        str += tag('Title', self.name)
-        str += tag('HDPosterURL', self.poster_url)
-        str += tag('Rating', float(self.rating) * 10)
-        str += gen_list(u'Categories', u'Category',self.genre)
-        return tag('show',str)
 
 
 class Episode(object):
@@ -327,52 +317,6 @@ class Episode(object):
     def __str__(self):
         return repr(self)
 
-    def render_xml(self,server_url=None):
-        str = u''
-        str += tag('ContentType',u'episode')
-        str += tag('Title', self.name)
-        str += tag('ShortDescriptionLine1', self.name)
-        str += tag('ShortDescriptionLine2', u'Season %s Episode %s' % (self.season_number, self.episode_number ))
-        str += tag('Description', self.overview)
-        str += tag('Season', self.season_number)
-        if self.rating:
-            str += tag('StarRating', float(self.rating) * 10)
-        str += tag('Rating',self.series.content_rating)
-        str += tag('EpisodeNumber', self.absolute_number)
-        str += tag('Episode', self.episode_number)
-        str += tag('HDPosterURL', self.poster_url)
-        str += tag('Series', self.series.name)
-        str += tag('ReleaseDate', self.first_aired)
-
-        # FIXME: Generate the stream properly
-        try:
-            url = '%s/tv/%s/%s/%s/play' % (server_url,self.series.name,self.season_number, self.episode_number)
-
-            stream = tag('url', url)
-            stream += tag('bitrate', 200)
-            stream += tag('quality', 'false')
-            stream += tag('contentid', self.id)
-            stream += tag('stickyredirects', 'true')
-            str += tag('stream',stream)
-        except:
-            pass
-
-        try:
-            actors = ''
-            for a in self.series.actors[:2]:
-                actors += tag('actor',a)
-
-            tag('actors',actors)
-            str += tag('actors',actors)
-        except Exception as e:
-            print e
-
-        # str += tag('Director', self.director)
-
-        str += tag('Watched', self.watched)
-        str += tag('Position',self.pos)
-
-        return tag('episode',str)
 
 
 
@@ -391,27 +335,5 @@ class Season:
         # print self.episodes[episode]
         return self.episodes[episode]
 
-    def render_xml(self):
-        str = u''
-        str += tag('ContentType',u'season')
-        str += tag('Title', self.series.name)
-        str += tag('SeasonTitle',self.series.name + u' Season %s' % self.season)
-        str += tag('HDPosterURL', self.poster_url)
-        str += tag('StarRating', float(self.series.rating) * 10)
-        str += tag('ShortDescriptionLine1', self.series.name)
-        str += tag('ShortDescriptionLine2', u'Season %s' % self.season)
-        str += tag('Season', self.season)
-        str += tag('Show', self.series.name)
-        return tag('season',str)
 
-
-
-def tag(tag,value):
-    return u'<%s>%s</%s>\n' % (tag,value,tag)
-
-def gen_list(plural,singular,l):
-            str = ''
-            for i in l:
-                str += tag(singular,i)
-            return tag(plural,str)
 
