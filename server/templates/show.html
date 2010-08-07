@@ -1,9 +1,9 @@
 $def with (show)
 <show>
 <ContentType>series</ContentType>
-<Description>$show.overview</Description>
+<Description>$:show.overview</Description>
 <ShortDescriptionLine1>$show.name</ShortDescriptionLine1>
-<Title>$show.name</Title>
+<Title>$:show.name</Title>
 <HDPosterURL>$show.poster_url</HDPosterURL>
 <Rating>$(float(show.rating) * 10)</Rating>
 <Categories>

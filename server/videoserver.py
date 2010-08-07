@@ -1,5 +1,6 @@
 import string,cgi,time
 import sys
+import getopt
 import shelve
 from os import curdir,sep,path
 import re
@@ -15,8 +16,7 @@ import videodb
 from videodb import Movie
 
 render = web.template.render('templates/', cache=False)
-urls = ('/Videos/tv.xml', 'shows',
-        '/Videos/tv/','shows',
+urls = ('/Videos/tv/','shows',
         '/Videos/tv/(.+)/(\d+)/(\d+)/play', 'play_episode',
         '/Videos/tv/(.+)/(\d+)/(\d+)/position', 'set_episode_position',
         '/Videos/tv/(.+)/(\d+)/(\d+)$', 'episode',
@@ -151,9 +151,38 @@ class play_movie:
 
 
 
-def main():
+def main(argv=None):
+    """
+    Serve a video database.
+    """
+    if argv is None:
+        argv = sys.argv
+
+
+    # handling options
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hc:", ["help","config="])
+    except getopt.error, msg:
+        print msg
+        print "for help use --help"
+        sys.exit(2)
+    # process options
+    config_file = '/etc/mc.config'
+    for o, a in opts:
+        if o in ("-h", "--help"):
+            print __doc__
+            sys.exit(0)
+        if o in ("-c", "--config"):
+            config_file = a
+
+    # read in configuration
+    print config_file
     config = ConfigParser.RawConfigParser()
-    config.read('/etc/mc.config')
+    config.read(config_file)
+
+
+    config = ConfigParser.RawConfigParser()
+    config.read(config_file)
     path = config.get('tv','path')
     regex = config.get('tv','regex')
     apikey = config.get('global','apikey')
