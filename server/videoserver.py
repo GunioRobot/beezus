@@ -1,7 +1,6 @@
 import string,cgi,time
 import sys
 import getopt
-import shelve
 from os import curdir,sep,path
 import re
 import urllib
@@ -12,6 +11,7 @@ import mimetypes
 
 from imdb import IMDb
 
+import pickledb
 import videodb
 from videodb import Movie
 
@@ -37,6 +37,8 @@ class movies:
 
 class movie:
     def GET(self, title):
+        # print title
+        # print web.ctx.db['movies']
         movie = web.ctx.db['movies'][title]
         web.header('Content-Type', 'text/xml')
         return render.movie(movie, web.ctx.app_root)
@@ -59,6 +61,7 @@ class seasons:
 
 
         season_nums = s.episode_list.keys()
+        print season_nums
         season_nums.sort(key=int)
 
         sorted = []
@@ -124,12 +127,13 @@ def play_media(media):
 
     if web.ctx.static_server:
         url = re.sub(web.ctx.path_from,web.ctx.path_to,media.file_path)
-        print 'Playing %s' % url
+        # print 'Playing %s' % url
         raise web.seeother(url)
     else:
         mime_type = mimetypes.guess_type(media.file_path)[0] or 'application/octet-stream'
         web.header("Content-Type", mime_type)
         static_file = open(media.file_path, 'rb')
+        # print static_file.size()
         return static_file
 
 
@@ -189,7 +193,7 @@ def main(argv=None):
 
 
     cachefile = config.get('global','dbcache')
-    db = shelve.open(cachefile)
+    db = pickledb.PickleDB(cachefile)
 
     # URL modifications
     app_root = config.get('global','app_root')
@@ -232,3 +236,5 @@ def find_show(db,show):
     for s in db.values():
         if s.name == show:
             return s
+
+

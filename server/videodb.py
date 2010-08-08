@@ -7,7 +7,7 @@ import string
 import thetvdbapi
 import imdb
 import ConfigParser
-import shelve
+import pickledb
 
 
 class Movie:
@@ -44,6 +44,8 @@ class VideoDB:
         self.movie_regex = ''
         self.movie_api_key = ''
 
+        self.interactive = True
+
     def gen_tv_db(self):
         self.tv_service = thetvdbapi.TheTVDB(self.tv_api_key)
         regex = re.compile(self.tv_regex)
@@ -58,7 +60,7 @@ class VideoDB:
                     info = comp.groupdict()
                     title = re.sub('\.',' ',info['title']).strip()
                     show_info = self.find_show(string.upper(title))
-                    print self.db['tv']
+                    # print self.db['tv']
 
                     if show_info:
                         s,e = (info['season'], info['episode'])
@@ -72,7 +74,7 @@ class VideoDB:
                 else:
                     print u'%s did not match' % name
 
-        print self.db['tv'].keys()
+        print self.db['tv']
 
 
     def find_show(self,name):
@@ -88,10 +90,13 @@ class VideoDB:
 
             # print 'got %s results' % s.length()
             # FIXME: Use a comprehension
-            titles = []
-            for s,t in showids:
-                titles.append(t)
-            idx = get_choice(titles)
+            if self.interactive:
+                titles = []
+                for s,t in showids:
+                    titles.append(t)
+                idx = get_choice(titles)
+            else:
+                idx = 0
 
             (showid,showtitle) = showids[idx]
             print 'You chose %s' % showtitle
@@ -99,22 +104,16 @@ class VideoDB:
             # print service.get_show_image_choices(showid)
             # print showInfo.name
 
-
-
-            # Absolutely no idea why this is necessary
-            # self.db['tv'][title] = showInfo
             title = showInfo.name
             self.name_map[name] = title
 
-            tv = self.db['tv']
-            tv[title] = showInfo
-            self.db['tv'] = tv
+            self.db['tv'][title] = showInfo
 
-            print 'tv %s' % tv
             print 'db %s' % self.db
 
             elist = {}
             for e in episodes:
+                print e
                 showInfo.add_episode(e)
 
             # Now fix up the season images
@@ -124,6 +123,7 @@ class VideoDB:
                 # Just grab the first one
                 try:
                     url = season_images[season][0]
+                    print "set season image to %s" % url
                 except:
                     url = showInfo.poster_url
 
@@ -148,22 +148,25 @@ class VideoDB:
                         movie = self.db['movies'][title]
                     except:
                         movie_list = self.movie_service.search_movie(title)
-                        idx = get_choice(movie_list)
-                    # print 'got %s results' % movie_list
-                    # for item in movie_list:
-                    # print item
+                        if self.interactive:
+                            idx = get_choice(movie_list)
+                        else:
+                            idx = 0
+                        # print 'got %s results' % movie_list
+                        # for item in movie_list:
+                        # print item
 
-                    item = movie_list[idx]
-                    self.movie_service.update(item)
-                    movie = Movie(item)
+                        item = movie_list[idx]
+                        self.movie_service.update(item)
+                        movie = Movie(item)
 
-                    movie.file_path = os.path.join(root,name)
+                        movie.file_path = os.path.join(root,name)
 
-                    # self.db['movies'][title] = movie
-                    # No idea why this is necessary
-                    movies = self.db['movies']
-                    movies[movie.name] = movie
-                    self.db['movies'] = movies
+                        self.db['movies'][movie.name] = movie
+                        # No idea why this is necessary
+                        # movies = self.db['movies']
+                        # movies[movie.name] = movie
+                        # self.db['movies'] = movies
 
                 else:
                     print u'%s does not match' % name
@@ -193,7 +196,6 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv
 
-
     # handling options
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hc:", ["help","config="])
@@ -216,24 +218,26 @@ def main(argv=None):
 
 
     cachefile = config.get('global','dbcache')
-    shelf = shelve.open(cachefile)
+    db = pickledb.PickleDB(cachefile)
 
-    if not shelf.has_key('tv'):
-        shelf['tv'] = { }
+    print 'Initial database %s' % db
 
-    if not shelf.has_key('movies'):
-        shelf['movies'] = { }
+    if not db.has_key('tv'):
+        db['tv'] = { }
+
+    if not db.has_key('movies'):
+        db['movies'] = { }
 
     path = config.get('tv','path')
     regex = config.get('tv','regex')
     apikey = config.get('global','apikey')
 
-    loader = VideoDB(shelf)
+
+    loader = VideoDB(db)
     loader.tv_directory = path
     loader.tv_regex = regex
     loader.tv_api_key = apikey
     loader.gen_tv_db()
-    # shelf['tv'] = gen_tv_db(path,regex,apikey,shelf['tv'])
 
     path = config.get('movies','path')
     regex = config.get('movies','regex')
@@ -242,9 +246,7 @@ def main(argv=None):
     loader.movie_regex = regex
     loader.gen_movie_db()
 
-    print loader.db
-    shelf.sync()
-    shelf.close()
+    loader.db.sync()
 
 if __name__ == '__main__':
     main()
