@@ -1,3 +1,5 @@
+from database import *
+
 import sys
 import getopt
 from imdb import IMDb
@@ -8,32 +10,12 @@ import thetvdbapi
 import imdb
 import ConfigParser
 import pickledb
+from sqlobject import *
 
-
-class Movie:
-    def __init__(self,movie):
-        self.name = movie['title']
-        self.overview = movie['plot outline']
-        self.rating = movie['rating']
-        self.poster_url = movie['full-size cover url']
-        # self.release_date = movie[' ']
-        #self.id = movie['id']
-        self.actors = movie['actors']
-        self.directors = movie['director']
-        for c in movie['certificates']:
-            if c[:3] == 'USA':
-                self.content_rating = c[4:]
-
-
-        self.watched = False
-        self.pos = 0
 
 
 class VideoDB:
     def __init__(self,db={}):
-
-        self.db = db
-        print self.db.keys()
 
         self.tv_directory = ''
         self.tv_regex = ''
@@ -60,12 +42,15 @@ class VideoDB:
                     info = comp.groupdict()
                     title = re.sub('\.',' ',info['title']).strip()
                     show_info = self.find_show(string.upper(title))
-                    # print self.db['tv']
 
                     if show_info:
                         s,e = (info['season'], info['episode'])
-                        # print "show_info.get_episode(str(int(%s)),str(int(%s)))" % (s , e)
-                        episode = show_info.get_episode(str(int(s)),str(int(e)))
+                        # print
+                        # "show_info.get_episode(str(int(%s)),str(int(%s)))" %
+                        # (s , e)
+                        episode = Episode.get_episode(show_info,int(s), int(e))
+
+                        # episode = show_info.get_episode(str(int(s)),str(int(e)))
                         episode.file_path = os.path.join(root,name)
 
                         print 'setting file path for %s' % episode.file_path
@@ -74,23 +59,18 @@ class VideoDB:
                 else:
                     print u'%s did not match' % name
 
-        print self.db['tv']
 
 
     def find_show(self,name):
         print 'Looking for %s' % name
         try:
-            title = self.name_map[name]
+            return Show.get(self.name_map[name])
         except:
             title = name
 
-        if self.db['tv'].has_key(title):
-            return self.db['tv'][title]
-        else:
             print 'looking for show %s' % title
             showids = self.tv_service.get_matching_shows(title)
 
-            # print 'got %s results' % s.length()
             # FIXME: Use a comprehension
             if self.interactive:
                 titles = []
@@ -102,34 +82,34 @@ class VideoDB:
 
             (showid,showtitle) = showids[idx]
             print 'You chose %s' % showtitle
+
+            try:
+                show = Show.select(Show.q.name==showtitle).getOne()
+                self.name_map[name] = show.id
+                return show
+            except:
+                pass
+
             (showInfo, episodes) = self.tv_service.get_show_and_episodes(showid)
-            # print service.get_show_image_choices(showid)
-            # print showInfo.name
+            # print self.tv_service.get_show_image_choices(showid)
 
-            title = showInfo.name
-            self.name_map[name] = title
-
-            self.db['tv'][title] = showInfo
-
-            print 'db %s' % self.db
-
-            elist = {}
-            for e in episodes:
-                print e
-                showInfo.add_episode(e)
+            self.name_map[name] = showInfo.id
 
             # Now fix up the season images
             season_images = self.tv_service.get_season_images(showid)
+            print showInfo
 
-            for (season, season_info) in showInfo.episode_list.iteritems():
+            for season in showInfo.seasons:
                 # Just grab the first one
+                # print season
                 try:
-                    url = season_images[season][0]
+                    url = season_images[season.season][0]
                     print "set season image to %s" % url
                 except:
                     url = showInfo.poster_url
 
-                season_info.poster_url = url
+                season.poster_url = url
+
             return showInfo
 
 
@@ -156,22 +136,20 @@ class VideoDB:
                             idx = get_choice(movie_list)
                         else:
                             idx = 0
-                        # print 'got %s results' % movie_list
+                        print 'got %s results' % movie_list
                         # for item in movie_list:
-                        # print item
-
-                        item = movie_list[idx]
-                        self.movie_service.update(item)
-                        movie = Movie(item)
-
-                        movie.file_path = os.path.join(root,name)
-
-                        self.db['movies'][movie.name] = movie
-                        # No idea why this is necessary
-                        # movies = self.db['movies']
-                        # movies[movie.name] = movie
-                        # self.db['movies'] = movies
-
+                        # # print item
+                        try:
+                            mi = movie_list[idx]
+                            movie = Movie.select(Movie.q.name==mi['title']).getOne()
+                            print 'found %s' % movie
+                            movie.file_path = os.path.join(root,name)
+                        except Exception as e:
+                            item = movie_list[idx]
+                            self.movie_service.update(item)
+                            movie = Movie()
+                            movie.load(item)
+                            movie.file_path = os.path.join(root,name)
                 else:
                     print u'%s does not match' % name
 
@@ -224,13 +202,19 @@ def main(argv=None):
     cachefile = config.get('global','dbcache')
     db = pickledb.PickleDB(cachefile)
 
-    print 'Initial database %s' % db
+    dbfile = config.get('global','db')
+    connection = connectionForURI('sqlite://%s' % dbfile)
+    print dbfile
+    #connection = connectionForURI('sqlite:/:memory:', debug=True)
+    sqlhub.processConnection = connection
+    try:
+        Show.createTable()
+        Season.createTable()
+        Episode.createTable()
+        Movie.createTable()
+    except:
+        pass
 
-    if not db.has_key('tv'):
-        db['tv'] = { }
-
-    if not db.has_key('movies'):
-        db['movies'] = { }
 
     path = config.get('tv','path')
     regex = config.get('tv','regex')
@@ -250,7 +234,6 @@ def main(argv=None):
     loader.movie_regex = regex
     loader.gen_movie_db()
 
-    loader.db.sync()
 
 if __name__ == '__main__':
     main()

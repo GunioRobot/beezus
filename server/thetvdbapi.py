@@ -15,12 +15,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+from  database import *
 
 import urllib
 import datetime
 import re
 
 import xml.etree.cElementTree as ET
+
+from sqlobject import *
+import sys, os
+
 
 
 class TheTVDB(object):
@@ -95,6 +100,7 @@ class TheTVDB(object):
             tree = ET.parse(data)
             show_node = tree.find("Series")
 
+
             show = Show(show_node, self.mirror_url)
         except SyntaxError:
             pass
@@ -127,12 +133,15 @@ class TheTVDB(object):
             tree = ET.parse(data)
             show_node = tree.find("Series")
 
-            show = Show(show_node, self.mirror_url)
-            episodes = []
+            show = Show()
+            show.load(show_node,self.mirror_url)
 
             episode_nodes = tree.getiterator("Episode")
+            episodes = []
             for episode_node in episode_nodes:
-                episodes.append(Episode(episode_node, self.mirror_url,show))
+                ep = Episode()
+                ep.load(episode_node, self.mirror_url,show)
+                episodes.append(ep)
 
             show_and_episodes = (show, episodes)
         except SyntaxError:
@@ -204,136 +213,7 @@ class TheTVDB(object):
 
 
 
-class Show(object):
-    """A python object representing a thetvdb.com show record."""
-    def __init__(self, node, mirror_url):
-        # Main show details
-        self.id = node.findtext("id")
-        self.name = node.findtext("SeriesName")
-        self.overview = node.findtext("Overview")
-        self.genre = [g for g in node.findtext("Genre").split("|") if g]
-        self.actors = [a for a in node.findtext("Actors").split("|") if a]
-        self.network = node.findtext("Network")
-        self.content_rating = node.findtext("ContentRating")
-        self.rating = node.findtext("Rating")
-        self.runtime = node.findtext("Runtime")
-        self.status = node.findtext("Status")
-        self.language = node.findtext("Language")
 
-        # Air details
-        self.first_aired = TheTVDB.convert_date(node.findtext("FirstAired"))
-        self.airs_day = node.findtext("Airs_DayOfWeek")
-        self.airs_time = TheTVDB.convert_time(node.findtext("Airs_Time"))
-
-        # Main show artwork
-        self.banner_url = "%s/banners/%s" % (mirror_url, node.findtext("banner"))
-        self.poster_url = "%s/banners/%s" % (mirror_url, node.findtext("poster"))
-        self.fanart_url = "%s/banners/%s" % (mirror_url, node.findtext("fanart"))
-
-        # External references
-        self.imdb_id = node.findtext("IMDB_ID")
-        self.tvcom_id = node.findtext("SeriesID")
-        self.zap2it_id = node.findtext("zap2it_id")
-
-        # When this show was last updated
-        self.last_updated = datetime.datetime.fromtimestamp(int(node.findtext("lastupdated")))
-
-
-        # video player specific stuff
-        self.episode_list = { }
-
-    def __str__(self):
-        import pprint
-        return pprint.saferepr(self)
-
-    def add_episode(self,episode):
-        season = episode.season_number
-        try:
-            sn = self.episode_list[season]
-        except:
-            sn = Season(season,self)
-            self.episode_list[season] = sn
-
-        sn.add_episode(episode)
-
-    def get_episode(self,season, episode):
-        return self.episode_list[season].get_episode(episode)
-
-
-class Episode(object):
-    """A python object representing a thetvdb.com episode record."""
-    def __init__(self, node, mirror_url, series=None):
-        self.id = node.findtext("id")
-        self.show_id = node.findtext("seriesid")
-        self.name = node.findtext("EpisodeName")
-        self.overview = node.findtext("Overview")
-        self.season_number = node.findtext("SeasonNumber")
-        self.episode_number = node.findtext("EpisodeNumber")
-        self.director = node.findtext("Director")
-        self.guest_stars = node.findtext("GuestStars")
-        self.language = node.findtext("Language")
-        self.production_code = node.findtext("ProductionCode")
-        self.rating = node.findtext("Rating")
-        self.writer = node.findtext("Writer")
-        self.series = series
-
-        # Air date
-        self.first_aired = TheTVDB.convert_date(node.findtext("FirstAired"))
-
-        # DVD Information
-        self.dvd_chapter = node.findtext("DVD_chapter")
-        self.dvd_disc_id = node.findtext("DVD_discid")
-        self.dvd_episode_number = node.findtext("DVD_episodenumber")
-        self.dvd_season = node.findtext("DVD_season")
-
-        # Artwork/screenshot
-        self.image = node.findtext("filename")
-        if self.image is not None:
-            self.poster_url = "%s/banners/%s" % (mirror_url, self.image)
-        else:
-            self.poster_url = ""
-        # Episode ordering information (normally for specials)
-        self.airs_after_season = node.findtext("airsafter_season")
-        self.airs_before_season = node.findtext("airsbefore_season")
-        self.airs_before_episode = node.findtext("airsbefore_episode")
-
-        # Unknown
-        self.combined_episode_number = node.findtext("combined_episode_number")
-        self.combined_season = node.findtext("combined_season")
-        self.absolute_number = node.findtext("absolute_number")
-        self.season_id = node.findtext("seasonid")
-        self.ep_img_flag = node.findtext("EpImgFlag")
-
-        # External references
-        self.imdb_id = node.findtext("IMDB_ID")
-
-        # When this episode was last updated
-        self.last_updated = datetime.datetime.fromtimestamp(int(node.findtext("lastupdated")))
-
-        # Handling play history
-        self.watched = False
-        self.pos = 0
-
-    def __str__(self):
-        return repr(self)
-
-
-
-
-
-class Season:
-    def __init__(self,season,series):
-        self.episodes = {}
-        self.series = series
-        self.season = season
-
-    def add_episode(self,episode):
-        self.episodes[episode.episode_number] = episode
-
-    def get_episode(self,episode):
-
-        # print self.episodes[episode]
-        return self.episodes[episode]
 
 
 
