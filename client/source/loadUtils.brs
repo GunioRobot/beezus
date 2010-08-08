@@ -25,15 +25,17 @@ End Function
 
 ' This returns a list of seasons for a series
 Function loadSeries(series as Object) as Object
-	 url = m.config.baseURL + "tv/" + series.Title
+   printAA(series)
+	 url = m.config.baseURL + "tv/" + HttpEncode(series.Title)
    data = genericLoadXMLURL(m.config,url)
 	 data.nextLoader = loadSeason
+	 printAA(data)
 	 return data
 End Function
 
 ' Return a list of episodes in a season
 Function loadSeason(season as Object) as Object
-	 url = m.config.baseURL + "tv/"+ m.parent.Title + "/" + season.season
+	 url = m.config.baseURL + "tv/"+ HttpEncode(m.parent.Title) + "/" + season.season
    data = genericLoadXMLURL(m.config,url)
 	 if data <> invalid
      data.nextLoader = loadEpisode
@@ -50,7 +52,7 @@ Function loadEpisode(episode as Object) as Object
    ' FIXME: Actually get the show title
 	 ' printAA(episode)
 
-	 url = m.config.baseURL + "tv/" + episode.series +  "/" + episode.season + "/" + episode.episode
+	 url = m.config.baseURL + "tv/" + HttpEncode(episode.series) +  "/" + episode.season + "/" + episode.episode
 
    ' data = genericLoadXMLURL(m.config,url)
 
@@ -66,7 +68,7 @@ End Function
 
 ' Load the data for a movie
 Function loadMovie(movie as Object) as Object
-	 url = m.config.baseURL + "movies/" + movie.Title
+	 url = m.config.baseURL + "movies/" + HttpEncode(movie.Title)
    ' data = genericLoadXMLURL(m.config,url)
 	 data = loadXMLURL(url,movieLoader)
 
@@ -90,6 +92,8 @@ End Function
 
 Function loadXMLURL(url as String, loader as Function) as Object
   http = NewHTTP(url)
+
+	print "Gave it url "; url
 	Dbg("url: ", http.Http.GetUrl())
 
   rsp = http.GetToStringWithRetry()
@@ -97,6 +101,8 @@ Function loadXMLURL(url as String, loader as Function) as Object
   xml = CreateObject("roXMLElement")
   if not xml.Parse(rsp) then
 		 print "Can't parse feed"
+		 ShowErrorDialog("Unable to parse XML response")
+
 		 ' ShowConnectionFailed()
 		 ' printXML(xml,10)
 		 return invalid
