@@ -9,7 +9,7 @@ Function makeConfiguration() as Object
 	  	return config
   else
 	   ' FIXME: Should prompt initial setup here.
-	   app.Write("BaseURL", "http://192.168.0.8:8080/Videos/")
+	   app.Write("BaseURL", "http://192.168.1.1:81/")
 	   app.Flush()
 		 return config
   end if
