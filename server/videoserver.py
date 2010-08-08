@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import string,cgi,time
 import sys
 import getopt
@@ -16,17 +17,18 @@ import videodb
 from videodb import Movie
 
 render = web.template.render('templates/', cache=False)
-urls = ('/Videos/tv/','shows',
-        '/Videos/tv/(.+)/(\d+)/(\d+)/play', 'play_episode',
-        '/Videos/tv/(.+)/(\d+)/(\d+)/position', 'set_episode_position',
-        '/Videos/tv/(.+)/(\d+)/(\d+)$', 'episode',
-        '/Videos/tv/(.+)/(\d+)$', 'episodes',
-        '/Videos/tv/(.+)$', 'seasons',
+urls = ('/tv/','shows',
+        '/tv/(.+)/(\d+)/(\d+)/play', 'play_episode',
+        '/tv/(.+)/(\d+)/(\d+)/position', 'set_episode_position',
+        '/tv/(.+)/(\d+)/(\d+)$', 'episode',
+        '/tv/(.+)/(\d+)$', 'episodes',
+        '/tv/(.+)$', 'seasons',
         # Movies
-        '/Videos/movies/(.+)/position', 'set_movie_position',
-        '/Videos/movies/(.+)/play', 'play_movie',
-        '/Videos/movies/(.+)', 'movie',
-        '/Videos/movies/', 'movies',
+        '/movies/(.+)/position', 'set_movie_position',
+        '/movies/(.+)/play', 'play_movie',
+        '/movies/(.+)', 'movie',
+        '/movies/', 'movies',
+        '.*', 'top'
         )
 
 class movies:
@@ -226,15 +228,15 @@ def main(argv=None):
     app.add_processor(_wrapper)
     app.run()
 
-
-if __name__ == '__main__':
-    main()
-
-
 # FIXME: This is dumb, and inefficient. Should use a better way to index it
 def find_show(db,show):
     for s in db.values():
         if s.name == show:
             return s
+
+if __name__ == '__main__':
+    main()
+
+
 
 

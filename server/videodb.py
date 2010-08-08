@@ -84,7 +84,9 @@ class VideoDB:
         except:
             title = name
 
-        if not self.db['tv'].has_key(title):
+        if self.db['tv'].has_key(title):
+            return self.db['tv'][title]
+        else:
             print 'looking for show %s' % title
             showids = self.tv_service.get_matching_shows(title)
 
@@ -129,6 +131,8 @@ class VideoDB:
 
                 season_info.poster_url = url
             return showInfo
+
+
 
 
 
