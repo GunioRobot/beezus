@@ -1,12 +1,12 @@
 $def with (season)
 <season>
 <ContentType>season</ContentType>
-<Title>$season.series.name</Title>
-<SeasonTitle>$('%s Season %s' % (season.series.name,season.season))</SeasonTitle>
+<Title>$season.show.name</Title>
+<SeasonTitle>$('%s Season %s' % (season.show.name,season.season))</SeasonTitle>
 <HDPosterURL>$season.poster_url</HDPosterURL>
-<StarRating>$(float(season.series.rating) * 10)</StarRating>
-<ShortDescriptionLine1>$season.series.name</ShortDescriptionLine1>
+<StarRating>$(float(season.show.rating) * 10)</StarRating>
+<ShortDescriptionLine1>$season.show.name</ShortDescriptionLine1>
 <ShortDescriptionLine2>$('Season %s' % season.season)</ShortDescriptionLine2>
 <Season>$season.season</Season>
-<Show>$season.series.name</Show>
+<Show>$season.show.name</Show>
 </season>

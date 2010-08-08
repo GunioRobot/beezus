@@ -2,10 +2,7 @@ $def with (season,app_root,render)
 
 <season>
 $code:
-    episode_nums = season.episodes.keys()
-    episode_nums.sort(key=int)
-
-$for e in episode_nums:
-    $:render.episode(season.episodes[e],app_root)
+$for e in season.episodes:
+    $:render.episode(e,app_root)
 
 </season>

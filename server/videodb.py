@@ -199,9 +199,6 @@ def main(argv=None):
     config.read(config_file)
 
 
-    cachefile = config.get('global','dbcache')
-    db = pickledb.PickleDB(cachefile)
-
     dbfile = config.get('global','db')
     connection = connectionForURI('sqlite://%s' % dbfile)
     print dbfile
@@ -221,7 +218,7 @@ def main(argv=None):
     apikey = config.get('global','apikey')
 
 
-    loader = VideoDB(db)
+    loader = VideoDB()
     loader.tv_directory = path
     loader.tv_regex = regex
     loader.tv_api_key = apikey

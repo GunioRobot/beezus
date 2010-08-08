@@ -14,7 +14,10 @@ from imdb import IMDb
 
 import pickledb
 import videodb
-from videodb import Movie
+# from videodb import Movie
+from sqlobject import *
+from sqlobject.sqlbuilder import *
+from database import *
 
 render = web.template.render('templates/', cache=False)
 urls = ('/tv/','shows',
@@ -34,14 +37,15 @@ urls = ('/tv/','shows',
 class movies:
     def GET(self):
         web.header('Content-Type', 'text/xml')
-        return render.movies(web.ctx.db['movies'].values(), web.ctx.app_root,render)
+        movies = list(Movies.select())
+        return render.movies(movies, web.ctx.app_root,render)
 
 
 class movie:
     def GET(self, title):
         # print title
         # print web.ctx.db['movies']
-        movie = web.ctx.db['movies'][title]
+        movie = Movie.select(Movie.q.name==title).getOne()
         web.header('Content-Type', 'text/xml')
         return render.movie(movie, web.ctx.app_root)
 
@@ -49,78 +53,46 @@ class movie:
 class shows:
     def GET(self):
         web.header('Content-Type', 'text/xml')
-        return render.shows(web.ctx.db['tv'].values(), render)
+        shows = list(Show.select())
+        return render.shows(shows, render)
 
 
 class seasons:
     def GET(self,show):
-        print 'looking for %s' % show
-
-        s = find_show(web.ctx.db['tv'],show)
-
-        if s is None:
-            raise web.notfound()
-
-
-        season_nums = s.episode_list.keys()
-        print season_nums
-        season_nums.sort(key=int)
-
-        sorted = []
-        for season in season_nums:
-            sorted.append(s.episode_list[season])
-
+        # FIXME: Sort the seasons.
         web.header('Content-Type', 'text/xml')
-        return render.seasons(sorted,render)
+        return render.seasons(fetch_info(show).seasons,render)
 
 
 class episodes:
     def GET(self,show,season):
-        s = find_show(web.ctx.db['tv'],show)
-
-        if s is None:
-            raise web.notfound()
-
         web.header('Content-Type', 'text/xml')
-        return render.episodes(s.episode_list[season],web.ctx.app_root,render)
+        return render.episodes(fetch_info(show,int(season)),web.ctx.app_root,render)
 
 
 class episode:
     def GET(self,show,season,epi):
-        print "trying to get a episode"
-        s = find_show(web.ctx.db['tv'],show)
-
-        if s is None:
-            raise web.notfound()
-
-        print s.episode_list[season]
-
-        ep = s.get_episode(season,epi)
+        ep = fetch_info(show,int(season),int(epi))
         return render.episode(ep,web.ctx.app_root)
 
 
 class set_episode_position:
     def POST(self,show,season,episode,position=0):
-        data = web.data()
-        s = find_show(web.ctx.db['tv'],show)
+
+        s = Show.select(Show.q.name==show).getOne()
         if s is None:
             raise web.notfound()
 
-        ep = s.get_episode(season,episode)
-        set_position(ep,data)
+        ep = fetch_info(show,int(season),int(epi))
+        ep.pos = int(position)
 
 class set_movie_position:
-    def POST(self,show,season,episode,position=0):
-        data = web.data()
-        movie = web.ctx.db['movies']['title']
+    def POST(self,title,position=0):
+        movie = Movie.select(Movie.q.name == title).getOne()
+
         if movie is None:
             raise web.notfound()
-
-        set_position(movie,data)
-
-def set_position(media,pos):
-    media.pos = pos
-    web.ctx.db.sync()
+        movie.pos = int(position)
 
 
 def play_media(media):
@@ -141,15 +113,12 @@ def play_media(media):
 
 class play_episode:
     def GET(self,show,season,episode):
-        s = find_show(web.ctx.db['tv'],show)
-        if s is None:
-            raise web.notfound()
-        ep = s.get_episode(season,episode)
+        ep = fetch_info(show,int(season),int(epi))
         play_media(ep)
 
 class play_movie:
     def GET(self,movie):
-        m = web.ctx.db['movies'][movie]
+        movie = Movie.select(Movie.q.name == title).getOne()
         if m is None:
             raise web.notfound()
         play_media(m)
@@ -194,8 +163,12 @@ def main(argv=None):
     apikey = config.get('global','apikey')
 
 
-    cachefile = config.get('global','dbcache')
-    db = pickledb.PickleDB(cachefile)
+    dbfile = config.get('global','db')
+    connection = connectionForURI('sqlite://%s' % dbfile)
+    print dbfile
+    #connection = connectionForURI('sqlite:/:memory:', debug=True)
+    sqlhub.processConnection = connection
+
 
     # URL modifications
     app_root = config.get('global','app_root')
@@ -215,7 +188,6 @@ def main(argv=None):
     # Apparently this is necessary to pass data to the handler:
     def _wrapper(handler):
         web.ctx.app_root = app_root
-        web.ctx.db = db
         web.ctx.static_server = static_server
         web.ctx.path_from = path_from
         web.ctx.path_to = path_to
@@ -228,15 +200,20 @@ def main(argv=None):
     app.add_processor(_wrapper)
     app.run()
 
-# FIXME: This is dumb, and inefficient. Should use a better way to index it
-def find_show(db,show):
-    for s in db.values():
-        if s.name == show:
-            return s
-
 if __name__ == '__main__':
     main()
 
 
-
-
+def fetch_info(title=None, season_num=None, episode_num=None):
+    if not title:
+        return None
+    print "Looking for show %s" % title
+    show = Show.select(Show.q.name==title).getOne()
+    if not season_num:
+        return show
+    season = Season.select((Season.q.show == show) & (Season.q.season == season_num)).getOne()
+    if not episode_num:
+        print season
+        return season
+    episode = Episode.select((Episode.q.show == show) & (Episode.q.season == season) & (Episode.q.episode_number == episode_num)).getOne()
+    return episode

@@ -4,30 +4,28 @@ $def with (episode, server_url=None)
 <Title>$episode.name</Title>
 <ShortDescriptionLine1>$episode.name</ShortDescriptionLine1>
 <ShortDescriptionLine2>$('Season %s Episode %s' % (episode.season_number,episode.episode_number ))</ShortDescriptionLine2>
-<Description>$episode.overview</Description>
+<Description>$:episode.overview</Description>
 <Season>$episode.season_number</Season>
 $if episode.rating:
   <StarRating>$(float(episode.rating) * 10)</StarRating>
 <HDPosterURL>$episode.poster_url</HDPosterURL>
 
-<EpisodeNumber>$episode.absolute_number</EpisodeNumber>
 <Episode>$episode.episode_number</Episode>
-<Series>$episode.series.name</Series>
-<ReleaseDate>$episode.first_aired</ReleaseDate>
+<Series>$episode.show.name</Series>
+<ReleaseDate>$#episode.first_aired</ReleaseDate>
 
 <stream>
-<url>$('%s/tv/%s/%s/%s/play' % (server_url,episode.series.name,episode.season_number, episode.episode_number))</url>
+<url>$('%s/tv/%s/%s/%s/play' % (server_url,episode.show.name,episode.season_number, episode.episode_number))</url>
 <bitrate>200</bitrate>
 <quality>false</quality>
 <stickyredirects>true</stickyredirects>
 </stream>
 
 <actors>
-$for a in episode.series.actors[:2]:
-  <actor>$a</actor>
+$#for a in episode.series.actors[:2]: <actor>$a</actor>
 </actors>
 
-<Watched>$episode.watched</Watched>
-<Position>$episode.pos</Position>
+<Watched>$#episode.watched</Watched>
+<Position>$#episode.pos</Position>
 
 </episode>
