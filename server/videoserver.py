@@ -10,9 +10,6 @@ import ConfigParser
 import web
 import mimetypes
 
-from imdb import IMDb
-
-import pickledb
 import videodb
 # from videodb import Movie
 from sqlobject import *
@@ -97,8 +94,6 @@ class set_movie_position:
 
 def play_media(media):
     media.watched = True
-    web.ctx.db.sync()
-
     if web.ctx.static_server:
         url = re.sub(web.ctx.path_from,web.ctx.path_to,media.file_path)
         # print 'Playing %s' % url
@@ -118,7 +113,7 @@ class play_episode:
 
 class play_movie:
     def GET(self,movie):
-        movie = Movie.select(Movie.q.name == title).getOne()
+        m = Movie.select(Movie.q.name == movie).getOne()
         if m is None:
             raise web.notfound()
         play_media(m)

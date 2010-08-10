@@ -8,6 +8,8 @@ from sqlobject import *
 from sqlobject.sqlbuilder import *
 import sys, os
 
+import tmdb
+
 
 class Genre(SQLObject):
     name = StringCol()
@@ -217,27 +219,29 @@ class Movie(SQLObject):
     content_rating = StringCol(default=None)
     watched = BoolCol(default=False)
     pos = IntCol(default=0)
+    file_path = StringCol(default=None)
 
 
     def load(self,movie):
         Movie.sqlmeta.lazyUpdate = True
-        self.name = movie['title']
-        self.overview = movie['plot outline']
-        self.rating = movie['rating']
-        self.poster_url = movie['full-size cover url']
-        for a in movie['actors']:
-            if a:
-                actor = Person.createOrFetch(a)
-                self.addActor(actor)
+        print movie.keys()
 
-        for d in movie['director']:
-            if d:
-                director = Person.createOrFetch(a)
-                self.addDirector(director)
+        self.name = movie['name']
+        self.overview = movie['overview']
+        self.rating = float(movie['rating'])
+        poster =  movie['images'].posters[0]['cover']
+        self.poster_url = poster
+        print movie['cast']['actor']
+        for a in movie['cast']['actor']:
+            actor = Person.createOrFetch(a['name'])
+            self.addActor(actor)
 
-        for c in movie['certificates']:
-            if c[:3] == 'USA':
-                self.content_rating = c[4:]
+        for d in movie['cast']['director']:
+            director = Person.createOrFetch(d['name'])
+            self.addDirector(director)
+
+        print movie['certification']
+        self.content_rating = movie['certification']
 
         self.watched = False
         self.pos = 0
