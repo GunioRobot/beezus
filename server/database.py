@@ -260,6 +260,20 @@ class Person(SQLObject):
             return Person(name=name)
 
 
+def fetch_info(title=None, season_num=None, episode_num=None):
+    if not title:
+        return None
+    print "Looking for show %s" % title
+    show = Show.select(Show.q.name==title).getOne()
+    if not season_num:
+        return show
+    season = Season.select((Season.q.show == show) & (Season.q.season == season_num)).getOne()
+    if not episode_num:
+        print season
+        return season
+    episode = Episode.select((Episode.q.show == show) & (Episode.q.season == season) & (Episode.q.episode_number == episode_num)).getOne()
+    return episode
+
 def main():
     connection_string='sqlite:///tmp/beezus.db'
     connection = connectionForURI(connection_string, debug=True, debugOutput=True)
@@ -277,3 +291,5 @@ def main():
 
 if __name__ == 'main':
     main()
+
+

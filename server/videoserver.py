@@ -97,7 +97,6 @@ class set_movie_position:
 
 def play_media(media):
     media.watched = True
-    web.ctx.db.sync()
 
     if web.ctx.static_server:
         url = re.sub(web.ctx.path_from,web.ctx.path_to,media.file_path)
@@ -113,7 +112,7 @@ def play_media(media):
 
 class play_episode:
     def GET(self,show,season,episode):
-        ep = fetch_info(show,int(season),int(epi))
+        ep = fetch_info(show,int(season),int(episode))
         play_media(ep)
 
 class play_movie:
@@ -204,16 +203,3 @@ if __name__ == '__main__':
     main()
 
 
-def fetch_info(title=None, season_num=None, episode_num=None):
-    if not title:
-        return None
-    print "Looking for show %s" % title
-    show = Show.select(Show.q.name==title).getOne()
-    if not season_num:
-        return show
-    season = Season.select((Season.q.show == show) & (Season.q.season == season_num)).getOne()
-    if not episode_num:
-        print season
-        return season
-    episode = Episode.select((Episode.q.show == show) & (Episode.q.season == season) & (Episode.q.episode_number == episode_num)).getOne()
-    return episode
