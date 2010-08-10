@@ -200,17 +200,19 @@ def main(argv=None):
 
 
     dbfile = config.get('global','db')
-    connection = connectionForURI('sqlite://%s' % dbfile)
+    connection = connectionForURI('sqlite://%s' % dbfile, debug=True)
     print dbfile
     #connection = connectionForURI('sqlite:/:memory:', debug=True)
     sqlhub.processConnection = connection
     try:
+        Genre.createTable()
         Show.createTable()
         Season.createTable()
         Episode.createTable()
         Movie.createTable()
-    except:
-        pass
+        Person.createTable()
+    except Exception as e:
+        print e
 
 
     path = config.get('tv','path')

@@ -7,6 +7,6 @@ $def with (show)
 <HDPosterURL>$show.poster_url</HDPosterURL>
 <Rating>$(float(show.rating) * 10)</Rating>
 <Categories>
-$#for g in show.genre: <Category>$g</Category>
+$#for g in show.genres: <Category>$g</Category>
 </Categories>
 </show>

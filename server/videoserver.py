@@ -37,7 +37,7 @@ urls = ('/tv/','shows',
 class movies:
     def GET(self):
         web.header('Content-Type', 'text/xml')
-        movies = list(Movies.select())
+        movies = list(Movie.select())
         return render.movies(movies, web.ctx.app_root,render)
 
 

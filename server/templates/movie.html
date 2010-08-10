@@ -17,7 +17,7 @@ $if movie.rating:
 
 <actors>
 $for a in movie.actors[:2]:
-  <actor>$a</actor>
+  <actor>$a.name</actor>
 </actors>
 
 <Watched>$movie.watched</Watched>

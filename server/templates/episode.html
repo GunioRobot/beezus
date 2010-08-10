@@ -22,7 +22,7 @@ $if episode.rating:
 </stream>
 
 <actors>
-$#for a in episode.series.actors[:2]: <actor>$a</actor>
+$for a in episode.show.actors: <actor>$a.name</actor>
 </actors>
 
 <Watched>$#episode.watched</Watched>
