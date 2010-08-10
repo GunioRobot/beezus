@@ -2,16 +2,14 @@ from database import *
 
 import sys
 import getopt
-from imdb import IMDb
 import re
 import os
 import string
 import thetvdbapi
 import imdb
 import ConfigParser
-import pickledb
 from sqlobject import *
-
+import tmdb
 
 
 class VideoDB:
@@ -117,9 +115,7 @@ class VideoDB:
 
 
     def gen_movie_db(self):
-        self.movie_service = imdb.IMDb()
         regex = re.compile(self.movie_regex)
-
         for root, dirs, files in os.walk(self.movie_directory, topdown=True):
             for name in files:
                 info = None
@@ -131,7 +127,7 @@ class VideoDB:
                     try:
                         movie = self.db['movies'][title]
                     except:
-                        movie_list = self.movie_service.search_movie(title)
+                        movie_list = tmdb.search(title)
                         if self.interactive:
                             idx = get_choice(movie_list)
                         else:
@@ -140,13 +136,11 @@ class VideoDB:
                         # for item in movie_list:
                         # # print item
                         try:
-                            mi = movie_list[idx]
-                            movie = Movie.select(Movie.q.name==mi['title']).getOne()
+                            movie = Movie.select(Movie.q.name==movie_list[idx]['name']).getOne()
                             print 'found %s' % movie
                             movie.file_path = os.path.join(root,name)
                         except Exception as e:
-                            item = movie_list[idx]
-                            self.movie_service.update(item)
+                            item = tmdb.getMovieInfo(movie_list[idx]['id'])
                             movie = Movie()
                             movie.load(item)
                             movie.file_path = os.path.join(root,name)
