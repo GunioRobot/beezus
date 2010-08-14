@@ -9,7 +9,7 @@ $if movie.rating:
 <HDPosterURL>$movie.poster_url</HDPosterURL>
 <Rating>$movie.content_rating</Rating>
 <stream>
-<url>$('%s/movies/%s/play' % (server_url,movie.name))</url>
+<url>$('%s/movies/%s/play' % (server_url,quote(movie.name)))</url>
 <bitrate>200</bitrate>
 <quality>false</quality>
 <stickyredirects>true</stickyredirects>

@@ -81,7 +81,7 @@ End Function
 Function genericLoadXMLURL(config as Object,url as String) as Object
 	print "Loading "; url
   d = loadXMLURL(url, genericLoader)
-	' printAA(d)
+	printAA(d)
 
 	if d <> invalid then
     ' Copy the configuration
@@ -97,6 +97,7 @@ Function loadXMLURL(url as String, loader as Function) as Object
 	Dbg("url: ", http.Http.GetUrl())
 
   rsp = http.GetToStringWithRetry()
+	print 'got rsp'; rsp
 
   xml = CreateObject("roXMLElement")
   if not xml.Parse(rsp) then

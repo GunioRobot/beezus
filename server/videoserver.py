@@ -16,7 +16,8 @@ from sqlobject import *
 from sqlobject.sqlbuilder import *
 from database import *
 
-render = web.template.render('templates/', cache=False)
+imports = {'quote' : urllib.quote }
+render = web.template.render('templates/', globals=imports,cache=False)
 urls = ('/tv/','shows',
         '/tv/(.+)/(\d+)/(\d+)/play', 'play_episode',
         '/tv/(.+)/(\d+)/(\d+)/position', 'set_episode_position',
@@ -58,18 +59,18 @@ class seasons:
     def GET(self,show):
         # FIXME: Sort the seasons.
         web.header('Content-Type', 'text/xml')
-        return render.seasons(fetch_info(show).seasons,render)
+        return render.seasons(fetchInfo(show).seasons,render)
 
 
 class episodes:
     def GET(self,show,season):
         web.header('Content-Type', 'text/xml')
-        return render.episodes(fetch_info(show,int(season)),web.ctx.app_root,render)
+        return render.episodes(fetchInfo(show,int(season)),web.ctx.app_root,render)
 
 
 class episode:
     def GET(self,show,season,epi):
-        ep = fetch_info(show,int(season),int(epi))
+        ep = fetchInfo(show,int(season),int(epi))
         return render.episode(ep,web.ctx.app_root)
 
 
@@ -80,7 +81,7 @@ class set_episode_position:
         if s is None:
             raise web.notfound()
 
-        ep = fetch_info(show,int(season),int(epi))
+        ep = fetchInfo(show,int(season),int(epi))
         ep.pos = int(position)
 
 class set_movie_position:
@@ -108,7 +109,7 @@ def play_media(media):
 
 class play_episode:
     def GET(self,show,season,episode):
-        ep = fetch_info(show,int(season),int(epi))
+        ep = fetchInfo(show,int(season),int(epi))
         play_media(ep)
 
 class play_movie:

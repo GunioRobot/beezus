@@ -136,6 +136,9 @@ class Episode(SQLObject):
     file_path = StringCol(default=None)
     poster_url = StringCol(default=None)
     # first_aired = StringCol(default=None)
+    watched = BoolCol(default=False)
+    pos = IntCol(default=0)
+
 
     """A python object representing a thetvdb.com episode record."""
     def load(self, node, mirror_url, series=None):
@@ -231,7 +234,7 @@ class Movie(SQLObject):
         self.rating = float(movie['rating'])
         poster =  movie['images'].posters[0]['cover']
         self.poster_url = poster
-        print movie['cast']['actor']
+        # print movie['cast']['actor']
         for a in movie['cast']['actor']:
             actor = Person.createOrFetch(a['name'])
             self.addActor(actor)
@@ -264,11 +267,16 @@ class Person(SQLObject):
             return Person(name=name)
 
 
-def fetch_info(title=None, season_num=None, episode_num=None):
+
+def fetchInfo(title=None, season_num=None, episode_num=None):
     if not title:
         return None
     print "Looking for show %s" % title
-    show = Show.select(Show.q.name==title).getOne()
+    try:
+        show = Show.select(Show.q.name==urllib.unquote(title)).getOne()
+    except:
+        raise Exception( "Could not find show %s" % urllib.unquote(title))
+        return None
     if not season_num:
         return show
     season = Season.select((Season.q.show == show) & (Season.q.season == season_num)).getOne()
@@ -277,6 +285,7 @@ def fetch_info(title=None, season_num=None, episode_num=None):
         return season
     episode = Episode.select((Episode.q.show == show) & (Episode.q.season == season) & (Episode.q.episode_number == episode_num)).getOne()
     return episode
+
 
 def main():
     connection_string='sqlite:///tmp/beezus.db'

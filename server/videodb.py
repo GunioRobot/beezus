@@ -33,6 +33,11 @@ class VideoDB:
         print "The root directory is %s" % self.tv_directory
         # print tv_regex
         for root, dirs, files in os.walk(self.tv_directory, topdown=True):
+            try:
+                dirs.remove('.AppleDouble')
+            except:
+                pass
+
             for name in files:
                 info = None
                 comp = regex.match(name)
@@ -117,6 +122,11 @@ class VideoDB:
     def gen_movie_db(self):
         regex = re.compile(self.movie_regex)
         for root, dirs, files in os.walk(self.movie_directory, topdown=True):
+            try:
+                dirs.remove('.AppleDouble')
+            except:
+                pass
+
             for name in files:
                 info = None
                 comp = regex.match(name)
