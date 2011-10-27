@@ -1,5 +1,5 @@
 '**********************************************************
-'**  Video Player Example Application - DeviceInfo 
+'**  Video Player Example Application - DeviceInfo
 '**  November 2009
 '**  Copyright (c) 2009 Roku Inc. All Rights Reserved.
 '**********************************************************
